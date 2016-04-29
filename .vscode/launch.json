@@ -1,0 +1,33 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "C++ Launch (GDB)",
+			"type": "cppdbg",
+			"request": "launch",
+			"launchOptionType": "Local",
+			"miDebuggerPath": "/usr/bin/gdb",
+			"targetArchitecture": "x64",
+			"program": "${workspaceRoot}/server_single.out",
+			"args": ["40000"],
+            //"args": ["127.0.0.1", "40000"],
+			"stopAtEntry": false,
+			"cwd": "${workspaceRoot}",
+			"environment": []
+		}/*,
+		{
+			"name": "C++ Attach (GDB)",
+			"type": "cppdbg",
+			"request": "launch",
+			"launchOptionType": "Local",
+			"miDebuggerPath": "/usr/bin/gdb",
+			"targetArchitecture": "x64",
+			"program": "${workspaceRoot}/a.out",
+			"args": [],
+			"stopAtEntry": false,
+			"cwd": "${workspaceRoot}",
+			"environment": [],
+			"processId": "enter program's process ID"
+		}*/
+	]
+}
