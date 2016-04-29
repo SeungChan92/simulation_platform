@@ -1,4 +1,4 @@
-#include "header/PlatformServer.h"
+#include "../header/PlatformServer.h"
 
 #include <stdlib.h>
 
