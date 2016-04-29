@@ -1,83 +1,46 @@
-#include <sys/socket.h>
-#include <stdlib.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <iostream>
-#include <unistd.h>
-
-#include <fstream>
-#include <sys/stat.h>
+#include "PlatformServer.h"
 
 #include "JobManager.h"
 
+#include <sys/socket.h>
+#include <string.h>
+#include <iostream>
+#include <unistd.h>
+#include <fstream>
+#include <sys/stat.h>
+#include <stdlib.h>
+
 using namespace std;
 
-int WAITING_QUEUE_SIZE = 5;
-int CLIENT_NO = 1;
-
-int sockfd, portno, client_sockfd, job_count, client_no;
-struct sockaddr_in serv_addr, cli_addr;
-socklen_t clilen;
-string file = "";
-pid_t pid;
-char request;
-
-void openSocket();
-void acceptClient();
-void error(const char *msg);
-void setServ_addr();
-void receiveFile();
-void saveFile();
-void chmodFile();
-void executeFile();
-void myFork();
-void classifyRequest();
-void extractClientNo();
-void sendJobInfo(int client_no);
-  
-//bool is_fileEnd(char* buffer, int buffer_str_length);
-
-int main(int argc, char *argv[])
+PlatformServer::PlatformServer(int port_no)
 {
-    portno = atoi(argv[1]);
+    this->port_no = port_no;
     
     JobManager::init();
     openSocket();
-    
-    while(true)
-    {
-        acceptClient();
-        classifyRequest();  
-        myFork();
-        
-        if(pid == 0) break;
-    }
-    
-    //cout << "--end of program-- pid : " << pid << endl << endl;
-    
-    return 0;
 }
 
-void openSocket() {
+void PlatformServer::openSocket() {
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     setServ_addr();
     bind(sockfd, (struct sockaddr *) &serv_addr,
             sizeof(serv_addr));
-    listen(sockfd, WAITING_QUEUE_SIZE);
+    listen(sockfd, PlatformServer::WAITING_QUEUE_SIZE);
     clilen = sizeof(cli_addr);    
 }
-void acceptClient() {
+void PlatformServer::setServ_addr() {
+    bzero((char *) &serv_addr, sizeof(serv_addr));
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_addr.s_addr = INADDR_ANY;
+    serv_addr.sin_port = htons(port_no);
+}
+void PlatformServer::acceptClient() {
     client_sockfd = accept(sockfd, 
                  (struct sockaddr *) &cli_addr, 
                  &clilen);    
 }
-void setServ_addr() {
-    bzero((char *) &serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(portno);
-}
-void receiveFile() {
+
+void PlatformServer::receiveFile() {
     int BUFFER_SIZE = 100;
     
     char buffer[BUFFER_SIZE+1];
@@ -106,7 +69,7 @@ void receiveFile() {
     
     close(client_sockfd);
 }
-void saveFile() {
+void PlatformServer::saveFile() {
     
     ofstream os("receivedFile.out", ios::out);
     os << file;
@@ -114,13 +77,14 @@ void saveFile() {
     
     //cout << file << endl;
 }
-void chmodFile() {
+void PlatformServer::chmodFile() {
     chmod("receivedFile.out", S_IRWXU|S_IRWXG|S_IRWXO);
 }
-void executeFile() {    
+void PlatformServer::executeFile() {    
     system("./receivedFile.out");
 }
-void myFork() {
+int PlatformServer::myFork() {
+    pid_t pid;
 
     cout << endl << "fork()" << endl;
     pid = fork();
@@ -148,7 +112,7 @@ void myFork() {
         // parent process
         if(request == 'F')
         {
-            JobManager::addJob(CLIENT_NO, pid);
+            JobManager::addJob(PlatformServer::CLIENT_NO, pid);
             //JobManager::printAll();
         }
     }
@@ -156,9 +120,11 @@ void myFork() {
     {
         // fork failed
         cout << "fork() failed!\n";
-    }   
+    }
+    
+    return pid;
 }
-void classifyRequest() {
+void PlatformServer::classifyRequest() {
     const char* SIGNAL_FILE_SEND = "|F|";
     const char* SIGNAL_STATE = "|S|";
     
@@ -180,7 +146,7 @@ void classifyRequest() {
         request = 'S';
     }
 }
-void extractClientNo() {
+void PlatformServer::extractClientNo() {
     int BUFFER_SIZE = 5;
     char clientNo[BUFFER_SIZE+1];
 
@@ -188,25 +154,9 @@ void extractClientNo() {
     read(client_sockfd,clientNo,BUFFER_SIZE);    
     client_no = atoi(clientNo);
 }
-void sendJobInfo(int client_no) {
+void PlatformServer::sendJobInfo(int client_no) {
     string job_info = JobManager::getJobInfo(client_no);
     cout << "<job_info>" << endl;
     cout << job_info;
     write(client_sockfd, job_info.c_str(), job_info.length());
 }
-/*
-bool is_fileEnd(char* buffer, int buffer_str_length) {
-    const char* end_signal = "IT'S THE FILE END";
-    
-    if(buffer_str_length >= 17)
-    {
-        const char* buffer_end_17 = buffer+(buffer_str_length-17);
-        cout << "buffer_end_17 : " << buffer_end_17 << endl;
-        
-        if(strcmp(buffer_end_17, end_signal) == 0)
-            return true;
-    }
-    
-    return false;
-}
-*/
