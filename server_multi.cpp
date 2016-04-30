@@ -1,20 +1,18 @@
-#include "header/PlatformServer.h"
+#include "header/SP_Server.h"
 
 #include <stdlib.h>
-
-void error(const char *msg);
 
 int main(int argc, char *argv[])
 {
     int port_no = atoi(argv[1]);
     pid_t pid;
-    PlatformServer platformServer(port_no);
+    SP_Server SP_Server(port_no);
 
     while(true)
     {
-        platformServer.acceptClient();
-        platformServer.classifyRequest();  
-        pid = platformServer.myFork();
+        SP_Server.acceptClient();
+        SP_Server.classifyRequest();  
+        pid = SP_Server.myFork();
         
         if(pid == 0) break;
     }

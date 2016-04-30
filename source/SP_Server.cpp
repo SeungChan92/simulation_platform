@@ -1,4 +1,4 @@
-#include "../header/PlatformServer.h"
+#include "../header/SP_Server.h"
 
 #include "../header/JobManager.h"
 
@@ -12,7 +12,7 @@
 
 using namespace std;
 
-PlatformServer::PlatformServer(int port_no)
+SP_Server::SP_Server(int port_no)
 {
     this->port_no = port_no;
     
@@ -20,27 +20,27 @@ PlatformServer::PlatformServer(int port_no)
     openSocket();
 }
 
-void PlatformServer::openSocket() {
+void SP_Server::openSocket() {
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     setServ_addr();
     bind(sockfd, (struct sockaddr *) &serv_addr,
             sizeof(serv_addr));
-    listen(sockfd, PlatformServer::WAITING_QUEUE_SIZE);
+    listen(sockfd, SP_Server::WAITING_QUEUE_SIZE);
     clilen = sizeof(cli_addr);    
 }
-void PlatformServer::setServ_addr() {
+void SP_Server::setServ_addr() {
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(port_no);
 }
-void PlatformServer::acceptClient() {
+void SP_Server::acceptClient() {
     client_sockfd = accept(sockfd, 
                  (struct sockaddr *) &cli_addr, 
                  &clilen);    
 }
 
-void PlatformServer::receiveFile() {
+void SP_Server::receiveFile() {
     int BUFFER_SIZE = 100;
     
     char buffer[BUFFER_SIZE+1];
@@ -69,7 +69,7 @@ void PlatformServer::receiveFile() {
     
     close(client_sockfd);
 }
-void PlatformServer::saveFile() {
+void SP_Server::saveFile() {
     
     ofstream os("receivedFile.out", ios::out);
     os << file;
@@ -77,13 +77,13 @@ void PlatformServer::saveFile() {
     
     //cout << file << endl;
 }
-void PlatformServer::chmodFile() {
+void SP_Server::chmodFile() {
     chmod("receivedFile.out", S_IRWXU|S_IRWXG|S_IRWXO);
 }
-void PlatformServer::executeFile() {    
+void SP_Server::executeFile() {    
     system("./receivedFile.out");
 }
-int PlatformServer::myFork() {
+int SP_Server::myFork() {
     pid_t pid;
 
     cout << endl << "fork()" << endl;
@@ -112,7 +112,7 @@ int PlatformServer::myFork() {
         // parent process
         if(request == 'F')
         {
-            JobManager::addJob(PlatformServer::CLIENT_NO, pid);
+            JobManager::addJob(SP_Server::CLIENT_NO, pid);
             //JobManager::printAll();
         }
     }
@@ -124,7 +124,7 @@ int PlatformServer::myFork() {
     
     return pid;
 }
-void PlatformServer::classifyRequest() {
+void SP_Server::classifyRequest() {
     const char* SIGNAL_FILE_SEND = "|F|";
     const char* SIGNAL_STATE = "|S|";
     
@@ -146,7 +146,7 @@ void PlatformServer::classifyRequest() {
         request = 'S';
     }
 }
-void PlatformServer::extractClientNo() {
+void SP_Server::extractClientNo() {
     int BUFFER_SIZE = 5;
     char clientNo[BUFFER_SIZE+1];
 
@@ -154,7 +154,7 @@ void PlatformServer::extractClientNo() {
     read(client_sockfd,clientNo,BUFFER_SIZE);    
     client_no = atoi(clientNo);
 }
-void PlatformServer::sendJobInfo(int client_no) {
+void SP_Server::sendJobInfo(int client_no) {
     string job_info = JobManager::getJobInfo(client_no);
     cout << "<job_info>" << endl;
     cout << job_info;

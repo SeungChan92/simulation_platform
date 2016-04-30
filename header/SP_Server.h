@@ -3,7 +3,7 @@
 
 using namespace std;
 
-class PlatformServer {
+class SP_Server {
 private:
     const static int WAITING_QUEUE_SIZE = 5;
     const static int CLIENT_NO = 1;
@@ -18,7 +18,7 @@ private:
     void setServ_addr();
     
 public:
-    PlatformServer(int port_no);
+    SP_Server(int port_no);
 
     void acceptClient();
     void receiveFile();
