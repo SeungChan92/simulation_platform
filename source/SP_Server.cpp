@@ -77,8 +77,15 @@ void SP_Server::chmodFile() {
 }
 void SP_Server::executeFile() { 
     string file_path = "./";
-    file_path.append(file_name);   
-    system(file_path.c_str());
+    
+    file_path.append(file_name);
+    int flag = execl(file_path.c_str(), file_path.c_str(), NULL);
+    if(flag == -1)
+    {
+        cout << "execl() : error" << endl;
+        cout << "file_name : " << file_name << endl;
+        cout << "file_path : " << file_path << endl;
+    }
 }
 int SP_Server::myFork() {
     pid_t pid;
@@ -169,6 +176,7 @@ void SP_Server::alertJobNo(int job_no) {
 void SP_Server::setFile_name(int job_no) {
     string file_name = "simulator_";
     file_name.append(to_string(job_no));
+    file_name.append(".out");
     
     this->file_name = file_name;
 }
