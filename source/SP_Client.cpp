@@ -12,10 +12,9 @@
 
 using namespace std;
 
-SP_Client::SP_Client(hostent* server, int port_no, string fileToSend) {
+SP_Client::SP_Client(hostent* server, int port_no) {
     this->server = server;
     this->port_no = port_no;
-    this->fileToSend = fileToSend;
     connect_state = -1;
     
     setServ_addr();
@@ -61,7 +60,7 @@ void SP_Client::sendSimulator()
     write(server_sockfd, buffer.c_str(), 10);
     */
 }
-void SP_Client::readSimulator()
+void SP_Client::readSimulator(string fileToSend)
 {
     string line;
     
@@ -80,18 +79,12 @@ void SP_Client::printJobInfo() {
     int BUFFER_SIZE = 100;
     char job_info[BUFFER_SIZE+1];
     
-    cout << "printJobInfo() : start" << endl;
-    
-    requestJobInfo();
     read(server_sockfd,job_info,BUFFER_SIZE);
-    cout << job_info << endl;
-    
-    cout << "printJobInfo() : end" << endl;
+    cout << endl << job_info << endl << endl;
 }
-void SP_Client::requestJobInfo() {
-    string header = "|S|00001";    
-    write(server_sockfd, header.c_str(), 8);
-    //close(server_sockfd);
+void SP_Client::requestJobInfo(int job_no) {
+    string header = makeHeader(job_no);  
+    write(server_sockfd, header.c_str(), 13);
 }
 void SP_Client::receiveJobNo() {
     int BUFFER_SIZE = 20;
@@ -102,5 +95,20 @@ void SP_Client::receiveJobNo() {
     job_no = atoi(job_no_str);
 }
 void SP_Client::printJobNo() {
-    cout << "job_no : " << job_no << endl;
+    cout << endl << "job_no : " << job_no << endl << endl;
+}
+string SP_Client::makeHeader(int job_no) {
+    string job_no_str = to_string(job_no);
+    int lengthOf_jobNo = job_no_str.length();
+    string zeros = "";
+    string header = "|S|";
+    char* zero = new char('0');
+    
+    for(int i=0; i<10-lengthOf_jobNo; i++)
+    {
+        zeros.append(zero);
+    }
+    header.append(zeros).append(job_no_str);
+    
+    return header;
 }

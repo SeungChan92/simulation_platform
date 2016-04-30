@@ -101,12 +101,12 @@ int SP_Server::myFork() {
         }
         else if(request == 'S')
         {
-            extractClientNo();
-            cout << "client_no : " << client_no << endl;
-            sendJobInfo(client_no);
+            sendJobInfo(extractJobNo());
         }
         else
-            cout << "He want something not sending file." << endl;        
+            cout << "He want something we don't know." << endl;
+        
+        cout << endl << "-------------- mission complete -----------------" << endl;        
     }
     else if (pid > 0)
     {
@@ -144,20 +144,23 @@ void SP_Server::classifyRequest() {
     }
     else if(strcmp(header, SIGNAL_STATE) == 0)
     {
-        cout << "He want to check his jobs." << endl;
+        cout << "He want to check his job." << endl;
         request = 'S';
     }
 }
-void SP_Server::extractClientNo() {
-    int BUFFER_SIZE = 5;
-    char clientNo[BUFFER_SIZE+1];
+int SP_Server::extractJobNo() {
+    int job_no = -1;
+    int BUFFER_SIZE = 10;
+    char job_no_str[BUFFER_SIZE+1];
 
-    memset(clientNo, 0, sizeof clientNo);
-    read(client_sockfd,clientNo,BUFFER_SIZE);    
-    client_no = atoi(clientNo);
+    memset(job_no_str, 0, BUFFER_SIZE+1);
+    read(client_sockfd,job_no_str,BUFFER_SIZE);    
+    job_no = atoi(job_no_str);
+    
+    return job_no;
 }
-void SP_Server::sendJobInfo(int client_no) {
-    string job_info = JobManager::getJobInfo(client_no);
+void SP_Server::sendJobInfo(int job_no) {
+    string job_info = JobManager::getJobInfo(job_no);
     write(client_sockfd, job_info.c_str(), job_info.length());
 }
 void SP_Server::alertJobNo(int job_no) {

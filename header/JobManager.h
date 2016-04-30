@@ -17,5 +17,5 @@ public:
     static void init();
     static int addJob(int client_no, int pid);
     static void printAll();
-    static string getJobInfo(int client_no);
+    static string getJobInfo(int job_no);
 };

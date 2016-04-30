@@ -27,7 +27,7 @@ public:
     void executeFile();
     int myFork();
     void classifyRequest();
-    void extractClientNo();
-    void sendJobInfo(int client_no);
+    int extractJobNo();
+    void sendJobInfo(int job_no);
     void alertJobNo(int job_no);
 };

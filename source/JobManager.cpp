@@ -38,19 +38,20 @@ void JobManager::printAll()
         cout << "pid    : " << JobManager::jobs[i].pid << endl << endl;
     }
 }
-string JobManager::getJobInfo(int client_no)
+string JobManager::getJobInfo(int job_no)
 {
     string job_info = "";
     
     for(int i=0; i<JobManager::count; i++)
     {
-        if(JobManager::jobs[i].client_no == client_no)
+        if(JobManager::jobs[i].job_no == job_no)
         {
-            job_info.append("job_no : ");
+            job_info.append("client_no : ");
+            job_info.append(to_string(JobManager::jobs[i].client_no));
+            job_info.append("\njob_no : ");
             job_info.append(to_string(JobManager::jobs[i].job_no));
             job_info.append("\npid : ");
             job_info.append(to_string(JobManager::jobs[i].pid));
-            job_info.append("\n\n");
         }
     }
     
