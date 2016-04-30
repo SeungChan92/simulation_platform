@@ -12,6 +12,7 @@ private:
     hostent* server;
 
     string makeHeader(int job_no);
+    
 public:
     SP_Client(hostent* server, int port_no);
 

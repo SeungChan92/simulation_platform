@@ -15,6 +15,7 @@ using namespace std;
 SP_Server::SP_Server(int port_no)
 {
     this->port_no = port_no;
+    file_name = "";
     
     JobManager::init();
     openSocket();
@@ -39,7 +40,6 @@ void SP_Server::acceptClient() {
                  (struct sockaddr *) &cli_addr, 
                  &clilen);    
 }
-
 void SP_Server::receiveFile() {
     int BUFFER_SIZE = 100;
     
@@ -48,40 +48,37 @@ void SP_Server::receiveFile() {
     memset(buffer, 0, sizeof buffer);
     while(read(client_sockfd,buffer,BUFFER_SIZE))
     {
+        file.append(buffer, BUFFER_SIZE);
+        memset(buffer, 0, sizeof buffer);
+        
         /*
         read(client_sockfd,buffer,BUFFER_SIZE);
         cout << "buffer : " << buffer << endl;
         
         int buffer_str_length = strlen(buffer);
         cout << "buffer_str_length : " << buffer_str_length << endl; 
-        if(is_fileEnd(buffer, buffer_str_length))
-        {
-            file.append(buffer, buffer_str_length-17);
-            break;
-        }
         
         cout << endl;
         */
-        
-        file.append(buffer, BUFFER_SIZE);
-        memset(buffer, 0, sizeof buffer);
     }
     
     close(client_sockfd);
 }
 void SP_Server::saveFile() {
     
-    ofstream os("receivedFile.out", ios::out);
+    ofstream os(file_name, ios::out);
     os << file;
     os.close();
     
     //cout << file << endl;
 }
 void SP_Server::chmodFile() {
-    chmod("receivedFile.out", S_IRWXU|S_IRWXG|S_IRWXO);
+    chmod(file_name.c_str(), S_IRWXU|S_IRWXG|S_IRWXO);
 }
-void SP_Server::executeFile() {    
-    system("./receivedFile.out");
+void SP_Server::executeFile() { 
+    string file_path = "./";
+    file_path.append(file_name);   
+    system(file_path.c_str());
 }
 int SP_Server::myFork() {
     pid_t pid;
@@ -95,6 +92,7 @@ int SP_Server::myFork() {
         if(request == 'F')
         {
             receiveFile();
+            setFile_name(JobManager::getCount());
             saveFile();
             chmodFile();
             executeFile();
@@ -141,6 +139,7 @@ void SP_Server::classifyRequest() {
     {
         cout << "He want to send file." << endl;
         request = 'F';
+        JobManager::increaseCount();
     }
     else if(strcmp(header, SIGNAL_STATE) == 0)
     {
@@ -166,4 +165,10 @@ void SP_Server::sendJobInfo(int job_no) {
 void SP_Server::alertJobNo(int job_no) {
     string job_no_str = to_string(job_no);
     write(client_sockfd, job_no_str.c_str(), job_no_str.length());
+}
+void SP_Server::setFile_name(int job_no) {
+    string file_name = "simulator_";
+    file_name.append(to_string(job_no));
+    
+    this->file_name = file_name;
 }

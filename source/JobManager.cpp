@@ -8,16 +8,17 @@ using namespace std;
 int JobManager::count;
 vector<Job> JobManager::jobs;
 
+int JobManager::getCount() {
+    return JobManager::count;
+}
+
 void JobManager::init()
 {
     JobManager::count = 0;
 }
 int JobManager::addJob(int client_no, int pid)
 {
-    int job_no = -1;
-    
-    JobManager::count++;
-    job_no = JobManager::count;
+    int job_no = JobManager::count;
     
     Job job = 
     {
@@ -56,4 +57,7 @@ string JobManager::getJobInfo(int job_no)
     }
     
     return job_info;
+}
+void JobManager::increaseCount() {
+    JobManager::count++;
 }

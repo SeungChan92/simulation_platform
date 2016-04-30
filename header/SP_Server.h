@@ -11,7 +11,7 @@ private:
     int sockfd, port_no, client_sockfd, job_count, client_no;
     struct sockaddr_in serv_addr, cli_addr;
     socklen_t clilen;
-    string file;
+    string file, file_name;
     char request;
     
     void openSocket();
@@ -30,4 +30,5 @@ public:
     int extractJobNo();
     void sendJobInfo(int job_no);
     void alertJobNo(int job_no);
+    void setFile_name(int job_no);
 };
