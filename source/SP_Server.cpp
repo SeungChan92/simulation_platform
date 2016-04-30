@@ -156,7 +156,5 @@ void SP_Server::extractClientNo() {
 }
 void SP_Server::sendJobInfo(int client_no) {
     string job_info = JobManager::getJobInfo(client_no);
-    cout << "<job_info>" << endl;
-    cout << job_info;
     write(client_sockfd, job_info.c_str(), job_info.length());
 }
