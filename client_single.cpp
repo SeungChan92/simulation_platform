@@ -14,14 +14,19 @@ int main(int argc, char *argv[])
     
     SP_Client sp_client(server, port_no, fileToSend);
     
+    sp_client.readSimulator();
     sp_client.connect_toServer();
     sp_client.checkConnect();
-    sp_client.readSimulator();
     sp_client.sendSimulator();
     
     sp_client.connect_toServer();
     sp_client.checkConnect();
-    sp_client.printJobInfo();
+    sp_client.receiveJobNo();
+    sp_client.printJobNo();
+    
+    //sp_client.connect_toServer();
+    //sp_client.checkConnect();
+    //sp_client.printJobInfo();
 
     return 0;
 }

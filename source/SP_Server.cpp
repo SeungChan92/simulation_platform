@@ -85,6 +85,7 @@ void SP_Server::executeFile() {
 }
 int SP_Server::myFork() {
     pid_t pid;
+    int job_no;
 
     cout << endl << "fork()" << endl;
     pid = fork();
@@ -112,8 +113,9 @@ int SP_Server::myFork() {
         // parent process
         if(request == 'F')
         {
-            JobManager::addJob(SP_Server::CLIENT_NO, pid);
-            //JobManager::printAll();
+            job_no = JobManager::addJob(SP_Server::CLIENT_NO, pid);
+            acceptClient();
+            alertJobNo(job_no);
         }
     }
     else
@@ -157,4 +159,8 @@ void SP_Server::extractClientNo() {
 void SP_Server::sendJobInfo(int client_no) {
     string job_info = JobManager::getJobInfo(client_no);
     write(client_sockfd, job_info.c_str(), job_info.length());
+}
+void SP_Server::alertJobNo(int job_no) {
+    string job_no_str = to_string(job_no);
+    write(client_sockfd, job_no_str.c_str(), job_no_str.length());
 }

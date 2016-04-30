@@ -22,4 +22,6 @@ public:
     void readSimulator();
     void printJobInfo();
     void requestJobInfo();
+    void receiveJobNo();
+    void printJobNo();
 };

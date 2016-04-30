@@ -29,4 +29,5 @@ public:
     void classifyRequest();
     void extractClientNo();
     void sendJobInfo(int client_no);
+    void alertJobNo(int job_no);
 };

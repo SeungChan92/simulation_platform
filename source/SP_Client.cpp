@@ -4,7 +4,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <fstream>
@@ -48,7 +48,8 @@ void SP_Client::checkConnect()
 }
 void SP_Client::sendSimulator()
 {
-    string header = "|F|";    
+    string header = "|F|";
+    
     write(server_sockfd, header.c_str(), 3);
     write(server_sockfd, simulator.c_str(), simulator.length());
     close(server_sockfd);
@@ -91,4 +92,15 @@ void SP_Client::requestJobInfo() {
     string header = "|S|00001";    
     write(server_sockfd, header.c_str(), 8);
     //close(server_sockfd);
+}
+void SP_Client::receiveJobNo() {
+    int BUFFER_SIZE = 20;
+    char job_no_str[BUFFER_SIZE+1];
+    memset(job_no_str, 0, BUFFER_SIZE+1);
+    
+    read(server_sockfd,job_no_str,BUFFER_SIZE);
+    job_no = atoi(job_no_str);
+}
+void SP_Client::printJobNo() {
+    cout << "job_no : " << job_no << endl;
 }

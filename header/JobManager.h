@@ -15,7 +15,7 @@ private:
     static int count;
 public:
     static void init();
-    static void addJob(int client_no, int pid);
+    static int addJob(int client_no, int pid);
     static void printAll();
     static string getJobInfo(int client_no);
 };

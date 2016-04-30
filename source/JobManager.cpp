@@ -12,17 +12,22 @@ void JobManager::init()
 {
     JobManager::count = 0;
 }
-void JobManager::addJob(int client_no, int pid)
+int JobManager::addJob(int client_no, int pid)
 {
+    int job_no = -1;
+    
     JobManager::count++;
+    job_no = JobManager::count;
     
     Job job = 
     {
         client_no,
-        JobManager::count,
-        pid        
+        job_no,
+        pid
     };
     JobManager::jobs.push_back(job);
+    
+    return job_no;
 }
 void JobManager::printAll()
 {
