@@ -9,6 +9,7 @@
 #include <fstream>
 #include <sys/stat.h>
 #include <stdlib.h>
+#include <wait.h>
 
 using namespace std;
 
@@ -57,7 +58,7 @@ void SP_Server::processRequest() {
 
         client_sockfd = acceptClient();
         alertJobNo(client_sockfd, job_no);
-        cout << endl << "-------------- mission complete : F_parent -----------------" << endl;
+        cout << endl << "-------------- mission complete : F - send job_no -----------------" << endl;
    
 /*        
         cout << endl << "fork()" << endl;
@@ -129,15 +130,11 @@ void SP_Server::chmodFile(string file_name) {
     chmod(file_name.c_str(), S_IRWXU|S_IRWXG|S_IRWXO);
 }
 void SP_Server::executeFile(string file_name) { 
-    string file_path = "./";
-    
-    file_path.append(file_name);
-    int flag = execl(file_path.c_str(), file_path.c_str(), NULL);
+    int flag = execl(file_name.c_str(), file_name.c_str(), NULL);
     if(flag == -1)
     {
         cout << "execl() : error" << endl;
         cout << "file_name : " << file_name << endl;
-        cout << "file_path : " << file_path << endl;
     }
 }
 char SP_Server::classifyRequest(int client_sockfd) {
@@ -197,8 +194,9 @@ void SP_Server::startThread(int client_sockfd) {
 }
 void* SP_Server::thread_main(void* argument) {
     struct thread_argument* arg = (thread_argument*)argument;
-    int client_sockfd = arg->client_sockfd;
+    int client_sockfd = arg->client_sockfd, pid;
     string file = "", file_name = "";
+    int* child_status = NULL;
     
     cout << "----- thread : start -----" << endl;
     
@@ -206,14 +204,29 @@ void* SP_Server::thread_main(void* argument) {
     file_name = getFile_name(JobManager::getCount());
     saveFile(file, file_name);
     chmodFile(file_name);
-    executeFile(file_name);
-    cout << endl << "-------------- mission complete : F_child -----------------" << endl;
- 
-    cout << "----- thread : end -----" << endl;    
-    pthread_exit((void*)1);
+    
+    pid = fork();
+    if(pid == 0) //child
+    {
+        executeFile(file_name);
+    }
+    else if(pid > 0) //parent
+    {
+        int ended_pid = waitpid(pid, child_status, 0);
+        cout << "      child_pid : " << pid << endl;
+        cout << "ended child_pid : " << ended_pid << endl;
+        cout << endl << "-------------- mission complete : F - measure -----------------" << endl;
+    
+        cout << "----- thread : end -----" << endl;
+        pthread_exit((void*)1);
+    }
+    else
+    {
+        cout << "fork() : fail" << endl;
+    }
 }
 void* SP_Server::buildThread_argument(int client_sockfd) {
-    struct thread_argument* thread_arg = new struct thread_argument;//calloc(1, sizeof(struct thread_argument));
+    struct thread_argument* thread_arg = new struct thread_argument;
     thread_arg->client_sockfd = client_sockfd;
     
     return (void*)thread_arg;
