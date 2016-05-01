@@ -16,6 +16,7 @@ SP_Server::SP_Server(int port_no)
 {
     this->port_no = port_no;
     file_name = "";
+    isMain = true;
     
     JobManager::init();
     openSocket();
@@ -34,6 +35,55 @@ void SP_Server::setServ_addr() {
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_addr.s_addr = INADDR_ANY;
     serv_addr.sin_port = htons(port_no);
+}
+
+bool SP_Server::getIsMain() {
+    return isMain;
+}
+
+void SP_Server::processRequest() {
+    pid_t pid;
+    int job_no;
+    
+    acceptClient();
+    classifyRequest();
+    if(request_type == 'F')
+    {
+        job_no = JobManager::addJob(SP_Server::CLIENT_NO);
+        
+        cout << endl << "fork()" << endl;
+        pid = fork();
+        
+        if(pid == 0) //child
+        {
+            isMain = false;
+        
+            receiveFile();
+            setFile_name(JobManager::getCount());
+            saveFile();
+            chmodFile();
+            executeFile();
+            cout << endl << "-------------- mission complete : F_child -----------------" << endl;
+        }
+        else if(pid > 0) //parent
+        {
+            acceptClient();
+            alertJobNo(job_no);
+            cout << endl << "-------------- mission complete : F_parent -----------------" << endl;
+            
+        }
+        else
+        {
+            cout << "fork() failed!\n";
+        }
+    }
+    else if(request_type == 'S') 
+    {
+        sendJobInfo(extractJobNo());
+        cout << endl << "-------------- mission complete : S -----------------" << endl;
+    }
+    else
+        cout << "He want something we don't know." << endl;
 }
 void SP_Server::acceptClient() {
     client_sockfd = accept(sockfd, 
@@ -87,50 +137,6 @@ void SP_Server::executeFile() {
         cout << "file_path : " << file_path << endl;
     }
 }
-int SP_Server::myFork() {
-    pid_t pid;
-    int job_no;
-
-    cout << endl << "fork()" << endl;
-    pid = fork();
-    if (pid == 0)
-    {
-        // child process
-        if(request == 'F')
-        {
-            receiveFile();
-            setFile_name(JobManager::getCount());
-            saveFile();
-            chmodFile();
-            executeFile();
-        }
-        else if(request == 'S')
-        {
-            sendJobInfo(extractJobNo());
-        }
-        else
-            cout << "He want something we don't know." << endl;
-        
-        cout << endl << "-------------- mission complete -----------------" << endl;        
-    }
-    else if (pid > 0)
-    {
-        // parent process
-        if(request == 'F')
-        {
-            job_no = JobManager::addJob(SP_Server::CLIENT_NO, pid);
-            acceptClient();
-            alertJobNo(job_no);
-        }
-    }
-    else
-    {
-        // fork failed
-        cout << "fork() failed!\n";
-    }
-    
-    return pid;
-}
 void SP_Server::classifyRequest() {
     const char* SIGNAL_FILE_SEND = "|F|";
     const char* SIGNAL_STATE = "|S|";
@@ -145,13 +151,12 @@ void SP_Server::classifyRequest() {
     if(strcmp(header, SIGNAL_FILE_SEND) == 0)
     {
         cout << "He want to send file." << endl;
-        request = 'F';
-        JobManager::increaseCount();
+        request_type = 'F';
     }
     else if(strcmp(header, SIGNAL_STATE) == 0)
     {
         cout << "He want to check his job." << endl;
-        request = 'S';
+        request_type = 'S';
     }
 }
 int SP_Server::extractJobNo() {

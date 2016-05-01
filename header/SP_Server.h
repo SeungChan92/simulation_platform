@@ -12,7 +12,8 @@ private:
     struct sockaddr_in serv_addr, cli_addr;
     socklen_t clilen;
     string file, file_name;
-    char request;
+    char request_type;
+    bool isMain;
     
     void openSocket();
     void setServ_addr();
@@ -20,12 +21,14 @@ private:
 public:
     SP_Server(int port_no);
 
+    bool getIsMain();
+
+    void processRequest();
     void acceptClient();
     void receiveFile();
     void saveFile();
     void chmodFile();
     void executeFile();
-    int myFork();
     void classifyRequest();
     int extractJobNo();
     void sendJobInfo(int job_no);

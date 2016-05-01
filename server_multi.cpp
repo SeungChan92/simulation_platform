@@ -5,18 +5,15 @@
 int main(int argc, char *argv[])
 {
     int port_no = atoi(argv[1]);
-    pid_t pid;
-    SP_Server SP_Server(port_no);
+    SP_Server sp_server(port_no);
 
     while(true)
     {
-        SP_Server.acceptClient();
-        SP_Server.classifyRequest();  
-        pid = SP_Server.myFork();
-        
-        if(pid == 0) break;
+        sp_server.processRequest();
+        if(!sp_server.getIsMain())
+            break;
     }
     
-    //cout << "--end of program-- pid : " << pid << endl << endl;
+    //cout << "--end of process-- pid : " << pid << endl << endl;
     return 0;
 }

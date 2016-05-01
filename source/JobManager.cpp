@@ -16,15 +16,14 @@ void JobManager::init()
 {
     JobManager::count = 0;
 }
-int JobManager::addJob(int client_no, int pid)
+int JobManager::addJob(int client_no)
 {
-    int job_no = JobManager::count;
+    int job_no = ++(JobManager::count);
     
     Job job = 
     {
         client_no,
-        job_no,
-        pid
+        job_no
     };
     JobManager::jobs.push_back(job);
     
@@ -57,7 +56,4 @@ string JobManager::getJobInfo(int job_no)
     }
     
     return job_info;
-}
-void JobManager::increaseCount() {
-    JobManager::count++;
 }
