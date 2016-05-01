@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include <wait.h>
+#include <sys/time.h>
 
 using namespace std;
 
@@ -42,7 +43,6 @@ bool SP_Server::getIsMain() {
 }
 
 void SP_Server::processRequest() {
-    //pid_t pid = -1;
     int job_no = -1, client_sockfd = -1;
     char request_type = 0;
     
@@ -52,31 +52,13 @@ void SP_Server::processRequest() {
     {
         job_no = JobManager::addJob(SP_Server::CLIENT_NO);
         
-        //pass job to new thread
         startThread(client_sockfd);
-        cout << "-- main-thread : after start another --" << endl;
+        cout << "-- this is main-thread : after start another --" << endl;
+        //cout << "-- another thread id : " << thread << " --" << endl;
 
         client_sockfd = acceptClient();
         alertJobNo(client_sockfd, job_no);
         cout << endl << "-------------- mission complete : F - send job_no -----------------" << endl;
-   
-/*        
-        cout << endl << "fork()" << endl;
-        pid = fork();
-        
-        if(pid == 0) //child
-        {
-            isMain = false;
-        }
-        else if(pid > 0) //parent
-        {
-                     
-        }
-        else
-        {
-            cout << "fork() failed!\n";
-        }
-*/
     }
     else if(request_type == 'S') 
     {
@@ -190,13 +172,14 @@ string SP_Server::getFile_name(int job_no) {
 }
 void SP_Server::startThread(int client_sockfd) {
     void* argument = buildThread_argument(client_sockfd);
-    pthread_create(&threads[0], NULL, &thread_main, argument);
+    pthread_create(&thread, NULL, &thread_main, argument);
 }
 void* SP_Server::thread_main(void* argument) {
     struct thread_argument* arg = (thread_argument*)argument;
     int client_sockfd = arg->client_sockfd, pid;
     string file = "", file_name = "";
     int* child_status = NULL;
+    struct timeval tv_start, tv_end, tv_elapsed;
     
     cout << "----- thread : start -----" << endl;
     
@@ -212,9 +195,12 @@ void* SP_Server::thread_main(void* argument) {
     }
     else if(pid > 0) //parent
     {
-        int ended_pid = waitpid(pid, child_status, 0);
-        cout << "      child_pid : " << pid << endl;
-        cout << "ended child_pid : " << ended_pid << endl;
+        gettimeofday(&tv_start, NULL);
+        waitpid(pid, child_status, 0);
+        gettimeofday(&tv_end, NULL);
+        timeval_subtract(&tv_elapsed, &tv_end, &tv_start);
+        
+        cout << "elapsed_time of child : " << tv_elapsed.tv_sec << '.' << tv_elapsed.tv_usec << endl;
         cout << endl << "-------------- mission complete : F - measure -----------------" << endl;
     
         cout << "----- thread : end -----" << endl;
@@ -230,4 +216,26 @@ void* SP_Server::buildThread_argument(int client_sockfd) {
     thread_arg->client_sockfd = client_sockfd;
     
     return (void*)thread_arg;
+}
+int SP_Server::timeval_subtract (struct timeval *result, struct timeval *x, struct timeval *y)
+{
+  /* Perform the carry for the later subtraction by updating y. */
+  if (x->tv_usec < y->tv_usec) {
+    int nsec = (y->tv_usec - x->tv_usec) / 1000000 + 1;
+    y->tv_usec -= 1000000 * nsec;
+    y->tv_sec += nsec;
+  }
+  if (x->tv_usec - y->tv_usec > 1000000) {
+    int nsec = (x->tv_usec - y->tv_usec) / 1000000;
+    y->tv_usec += 1000000 * nsec;
+    y->tv_sec -= nsec;
+  }
+
+  /* Compute the time remaining to wait.
+     tv_usec is certainly positive. */
+  result->tv_sec = x->tv_sec - y->tv_sec;
+  result->tv_usec = x->tv_usec - y->tv_usec;
+
+  /* Return 1 if result is negative. */
+  return x->tv_sec < y->tv_sec;
 }

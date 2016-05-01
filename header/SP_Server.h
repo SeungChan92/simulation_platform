@@ -1,5 +1,6 @@
 #include <string>
 #include <netinet/in.h>
+#include <sys/time.h>
 
 using namespace std;
 
@@ -13,7 +14,7 @@ private:
     socklen_t clilen;
     char request_type;
     bool isMain;
-    pthread_t threads[5];
+    pthread_t thread;
     
     void openSocket();
     void setServ_addr();
@@ -42,4 +43,5 @@ public:
     void startThread(int client_sockfd);
     static void* thread_main(void*);
     void* buildThread_argument(int client_sockfd);
+    static int timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y);
 };
