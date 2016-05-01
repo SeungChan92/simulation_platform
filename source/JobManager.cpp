@@ -31,29 +31,53 @@ int JobManager::addJob(int client_no)
 }
 void JobManager::printAll()
 {
+    Job* job;
+    
     for(int i=0;i<JobManager::count;i++)
     {
-        cout << "client_no : " <<  JobManager::jobs[i].client_no << endl;
-        cout << "job_no : " <<  JobManager::jobs[i].job_no << endl;
-        cout << "pid    : " << JobManager::jobs[i].pid << endl << endl;
+        job = &(JobManager::jobs[i]);
+        
+        cout << "client_no      : " <<  job->client_no << endl;
+        cout << "job_no         : " <<  job->job_no << endl;
+        cout << "pid            : " << job->pid << endl;
+        cout << "elapsed_time   : " << job->tv_elapsed.tv_sec << '.' << job->tv_elapsed.tv_usec << endl;
     }
 }
 string JobManager::getJobInfo(int job_no)
 {
     string job_info = "";
+    Job* job;
     
     for(int i=0; i<JobManager::count; i++)
     {
         if(JobManager::jobs[i].job_no == job_no)
         {
-            job_info.append("client_no : ");
-            job_info.append(to_string(JobManager::jobs[i].client_no));
-            job_info.append("\njob_no : ");
-            job_info.append(to_string(JobManager::jobs[i].job_no));
-            job_info.append("\npid : ");
-            job_info.append(to_string(JobManager::jobs[i].pid));
+            job = &(JobManager::jobs[i]);
+            
+            job_info.append("client_no      : ");
+            job_info.append(to_string(job->client_no));
+            job_info.append("\njob_no         : ");
+            job_info.append(to_string(job->job_no));
+            job_info.append("\npid            : ");
+            job_info.append(to_string(job->pid));
+            job_info.append("\nelapsed_time   : ");
+            job_info.append(to_string(job->tv_elapsed.tv_sec));
+            job_info.append(".");
+            job_info.append(to_string(job->tv_elapsed.tv_usec));
+            
+            break;
         }
     }
     
     return job_info;
+}
+void JobManager::updateElapsed_time(int job_no, timeval tv_elapsed) {
+    for(int i=0; i<JobManager::count; i++)
+    {
+        if(JobManager::jobs[i].job_no == job_no)
+        {
+            JobManager::jobs[i].tv_elapsed = tv_elapsed;
+            break;
+        }
+    }
 }

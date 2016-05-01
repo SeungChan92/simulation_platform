@@ -22,7 +22,7 @@ private:
 public:
     struct thread_argument
     {
-        int client_sockfd;
+        int client_sockfd, job_no;
     };
 
     SP_Server(int port_no);
@@ -40,8 +40,8 @@ public:
     void sendJobInfo(int client_sockfd, int job_no);
     void alertJobNo(int client_sockfd, int job_no);
     static string getFile_name(int job_no);
-    void startThread(int client_sockfd);
+    void startThread(int client_sockfd, int job_no);
     static void* thread_main(void*);
-    void* buildThread_argument(int client_sockfd);
+    void* buildThread_argument(int client_sockfd, int job_no);
     static int timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y);
 };

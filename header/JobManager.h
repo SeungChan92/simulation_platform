@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <sys/time.h>
 
 #include "Job.h"
 
@@ -20,4 +21,5 @@ public:
     static int addJob(int client_no);
     static void printAll();
     static string getJobInfo(int job_no);
+    static void updateElapsed_time(int job_no, timeval tv_elapsed);
 };

@@ -52,13 +52,13 @@ void SP_Server::processRequest() {
     {
         job_no = JobManager::addJob(SP_Server::CLIENT_NO);
         
-        startThread(client_sockfd);
-        cout << "-- this is main-thread : after start another --" << endl;
+        startThread(client_sockfd, job_no);
+        //cout << "-- this is main-thread : after start another --" << endl;
         //cout << "-- another thread id : " << thread << " --" << endl;
 
         client_sockfd = acceptClient();
         alertJobNo(client_sockfd, job_no);
-        cout << endl << "-------------- mission complete : F - send job_no -----------------" << endl;
+        //cout << endl << "-------------- mission complete : F - send job_no -----------------" << endl;
     }
     else if(request_type == 'S') 
     {
@@ -170,13 +170,15 @@ string SP_Server::getFile_name(int job_no) {
     
     return file_name;
 }
-void SP_Server::startThread(int client_sockfd) {
-    void* argument = buildThread_argument(client_sockfd);
+void SP_Server::startThread(int client_sockfd, int job_no) {
+    void* argument = buildThread_argument(client_sockfd, job_no);
     pthread_create(&thread, NULL, &thread_main, argument);
 }
 void* SP_Server::thread_main(void* argument) {
     struct thread_argument* arg = (thread_argument*)argument;
-    int client_sockfd = arg->client_sockfd, pid;
+    int client_sockfd = arg->client_sockfd;
+    int job_no = arg->job_no;
+    int pid = -1;
     string file = "", file_name = "";
     int* child_status = NULL;
     struct timeval tv_start, tv_end, tv_elapsed;
@@ -199,6 +201,7 @@ void* SP_Server::thread_main(void* argument) {
         waitpid(pid, child_status, 0);
         gettimeofday(&tv_end, NULL);
         timeval_subtract(&tv_elapsed, &tv_end, &tv_start);
+        JobManager::updateElapsed_time(job_no, tv_elapsed);
         
         cout << "elapsed_time of child : " << tv_elapsed.tv_sec << '.' << tv_elapsed.tv_usec << endl;
         cout << endl << "-------------- mission complete : F - measure -----------------" << endl;
@@ -211,9 +214,10 @@ void* SP_Server::thread_main(void* argument) {
         cout << "fork() : fail" << endl;
     }
 }
-void* SP_Server::buildThread_argument(int client_sockfd) {
+void* SP_Server::buildThread_argument(int client_sockfd, int job_no) {
     struct thread_argument* thread_arg = new struct thread_argument;
     thread_arg->client_sockfd = client_sockfd;
+    thread_arg->job_no = job_no;
     
     return (void*)thread_arg;
 }
