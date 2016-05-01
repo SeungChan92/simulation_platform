@@ -15,7 +15,6 @@ using namespace std;
 SP_Server::SP_Server(int port_no)
 {
     this->port_no = port_no;
-    file_name = "";
     isMain = true;
     
     JobManager::init();
@@ -42,57 +41,60 @@ bool SP_Server::getIsMain() {
 }
 
 void SP_Server::processRequest() {
-    pid_t pid;
-    int job_no;
+    //pid_t pid = -1;
+    int job_no = -1, client_sockfd = -1;
+    char request_type = 0;
     
-    acceptClient();
-    classifyRequest();
+    client_sockfd = acceptClient();
+    request_type = classifyRequest(client_sockfd);
     if(request_type == 'F')
     {
         job_no = JobManager::addJob(SP_Server::CLIENT_NO);
         
+        //pass job to new thread
+        startThread(client_sockfd);
+        cout << "-- main-thread : after start another --" << endl;
+
+        client_sockfd = acceptClient();
+        alertJobNo(client_sockfd, job_no);
+        cout << endl << "-------------- mission complete : F_parent -----------------" << endl;
+   
+/*        
         cout << endl << "fork()" << endl;
         pid = fork();
         
         if(pid == 0) //child
         {
             isMain = false;
-        
-            receiveFile();
-            setFile_name(JobManager::getCount());
-            saveFile();
-            chmodFile();
-            executeFile();
-            cout << endl << "-------------- mission complete : F_child -----------------" << endl;
         }
         else if(pid > 0) //parent
         {
-            acceptClient();
-            alertJobNo(job_no);
-            cout << endl << "-------------- mission complete : F_parent -----------------" << endl;
-            
+                     
         }
         else
         {
             cout << "fork() failed!\n";
         }
+*/
     }
     else if(request_type == 'S') 
     {
-        sendJobInfo(extractJobNo());
+        sendJobInfo(client_sockfd, extractJobNo(client_sockfd));
         cout << endl << "-------------- mission complete : S -----------------" << endl;
     }
     else
         cout << "He want something we don't know." << endl;
 }
-void SP_Server::acceptClient() {
-    client_sockfd = accept(sockfd, 
+int SP_Server::acceptClient() {
+    int client_sockfd = accept(sockfd, 
                  (struct sockaddr *) &cli_addr, 
-                 &clilen);    
+                 &clilen);
+                 
+    return client_sockfd;
 }
-void SP_Server::receiveFile() {
+string SP_Server::receiveFile(int client_sockfd) {
+    string file = "";
     int BUFFER_SIZE = 100;
-    
     char buffer[BUFFER_SIZE+1];
 
     memset(buffer, 0, sizeof buffer);
@@ -111,10 +113,11 @@ void SP_Server::receiveFile() {
         cout << endl;
         */
     }
-    
     close(client_sockfd);
+    
+    return file;
 }
-void SP_Server::saveFile() {
+void SP_Server::saveFile(string file, string file_name) {
     
     ofstream os(file_name, ios::out);
     os << file;
@@ -122,10 +125,10 @@ void SP_Server::saveFile() {
     
     //cout << file << endl;
 }
-void SP_Server::chmodFile() {
+void SP_Server::chmodFile(string file_name) {
     chmod(file_name.c_str(), S_IRWXU|S_IRWXG|S_IRWXO);
 }
-void SP_Server::executeFile() { 
+void SP_Server::executeFile(string file_name) { 
     string file_path = "./";
     
     file_path.append(file_name);
@@ -137,9 +140,10 @@ void SP_Server::executeFile() {
         cout << "file_path : " << file_path << endl;
     }
 }
-void SP_Server::classifyRequest() {
+char SP_Server::classifyRequest(int client_sockfd) {
     const char* SIGNAL_FILE_SEND = "|F|";
     const char* SIGNAL_STATE = "|S|";
+    char request_type = 0;
     
     int BUFFER_SIZE = 3;
     char header[BUFFER_SIZE+1];
@@ -158,8 +162,10 @@ void SP_Server::classifyRequest() {
         cout << "He want to check his job." << endl;
         request_type = 'S';
     }
+    
+    return request_type;
 }
-int SP_Server::extractJobNo() {
+int SP_Server::extractJobNo(int client_sockfd) {
     int job_no = -1;
     int BUFFER_SIZE = 10;
     char job_no_str[BUFFER_SIZE+1];
@@ -170,18 +176,45 @@ int SP_Server::extractJobNo() {
     
     return job_no;
 }
-void SP_Server::sendJobInfo(int job_no) {
+void SP_Server::sendJobInfo(int client_sockfd, int job_no) {
     string job_info = JobManager::getJobInfo(job_no);
     write(client_sockfd, job_info.c_str(), job_info.length());
 }
-void SP_Server::alertJobNo(int job_no) {
+void SP_Server::alertJobNo(int client_sockfd, int job_no) {
     string job_no_str = to_string(job_no);
     write(client_sockfd, job_no_str.c_str(), job_no_str.length());
 }
-void SP_Server::setFile_name(int job_no) {
+string SP_Server::getFile_name(int job_no) {
     string file_name = "simulator_";
     file_name.append(to_string(job_no));
     file_name.append(".out");
     
-    this->file_name = file_name;
+    return file_name;
+}
+void SP_Server::startThread(int client_sockfd) {
+    void* argument = buildThread_argument(client_sockfd);
+    pthread_create(&threads[0], NULL, &thread_main, argument);
+}
+void* SP_Server::thread_main(void* argument) {
+    struct thread_argument* arg = (thread_argument*)argument;
+    int client_sockfd = arg->client_sockfd;
+    string file = "", file_name = "";
+    
+    cout << "----- thread : start -----" << endl;
+    
+    file = receiveFile(client_sockfd);
+    file_name = getFile_name(JobManager::getCount());
+    saveFile(file, file_name);
+    chmodFile(file_name);
+    executeFile(file_name);
+    cout << endl << "-------------- mission complete : F_child -----------------" << endl;
+ 
+    cout << "----- thread : end -----" << endl;    
+    pthread_exit((void*)1);
+}
+void* SP_Server::buildThread_argument(int client_sockfd) {
+    struct thread_argument* thread_arg = new struct thread_argument;//calloc(1, sizeof(struct thread_argument));
+    thread_arg->client_sockfd = client_sockfd;
+    
+    return (void*)thread_arg;
 }
