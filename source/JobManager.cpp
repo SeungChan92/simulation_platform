@@ -23,7 +23,9 @@ int JobManager::addJob(int client_no)
     Job job = 
     {
         client_no,
-        job_no
+        job_no,
+        -1,
+        -1
     };
     JobManager::jobs.push_back(job);
     
@@ -77,6 +79,16 @@ void JobManager::updateElapsed_time(int job_no, timeval tv_elapsed) {
         if(JobManager::jobs[i].job_no == job_no)
         {
             JobManager::jobs[i].tv_elapsed = tv_elapsed;
+            break;
+        }
+    }
+}
+void JobManager::updatePid(int job_no, int pid) {
+    for(int i=0; i<JobManager::count; i++)
+    {
+        if(JobManager::jobs[i].job_no == job_no)
+        {
+            JobManager::jobs[i].pid = pid;
             break;
         }
     }

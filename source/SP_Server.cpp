@@ -198,6 +198,7 @@ void* SP_Server::thread_main(void* argument) {
     else if(pid > 0) //parent
     {
         gettimeofday(&tv_start, NULL);
+        JobManager::updatePid(job_no, pid);
         waitpid(pid, child_status, 0);
         gettimeofday(&tv_end, NULL);
         timeval_subtract(&tv_elapsed, &tv_end, &tv_start);

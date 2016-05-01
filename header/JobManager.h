@@ -22,4 +22,5 @@ public:
     static void printAll();
     static string getJobInfo(int job_no);
     static void updateElapsed_time(int job_no, timeval tv_elapsed);
+    static void updatePid(int job_no, int pid);
 };
