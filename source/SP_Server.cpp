@@ -43,8 +43,8 @@ bool SP_Server::getIsMain() {
 }
 
 void SP_Server::processRequest() {
-    int job_no = -1, client_sockfd = -1;
-    char request_type = 0;
+    int job_no = -1, client_sockfd = -1, temp_int = -1;
+    char request_type = 0, temp_char = 0;
     
     client_sockfd = acceptClient();
     request_type = classifyRequest(client_sockfd);
@@ -60,9 +60,21 @@ void SP_Server::processRequest() {
         alertJobNo(client_sockfd, job_no);
         //cout << endl << "-------------- mission complete : F - send job_no -----------------" << endl;
     }
-    else if(request_type == 'S') 
+    else if(request_type == 'I') 
     {
         sendJobInfo(client_sockfd, extractJobNo(client_sockfd));
+        cout << endl << "-------------- mission complete : I -----------------" << endl;
+    }
+    else if(request_type == 'S') 
+    {
+        job_no = extractJobNo(client_sockfd);
+        temp_int = JobManager::get_pid(job_no);
+        temp_char = check_pstatus(temp_int);
+        
+        cout << endl << "pstatus : " << temp_char << endl << endl;
+        
+        JobManager::update_pstatus(job_no, temp_char);        
+        send_pstatus(client_sockfd, job_no);
         cout << endl << "-------------- mission complete : S -----------------" << endl;
     }
     else
@@ -121,7 +133,8 @@ void SP_Server::executeFile(string file_name) {
 }
 char SP_Server::classifyRequest(int client_sockfd) {
     const char* SIGNAL_FILE_SEND = "|F|";
-    const char* SIGNAL_STATE = "|S|";
+    const char* SIGNAL_JOB_INFO = "|I|";
+    const char* SIGNAL_PROCESS_STATUS = "|S|";
     char request_type = 0;
     
     int BUFFER_SIZE = 3;
@@ -136,9 +149,14 @@ char SP_Server::classifyRequest(int client_sockfd) {
         cout << "He want to send file." << endl;
         request_type = 'F';
     }
-    else if(strcmp(header, SIGNAL_STATE) == 0)
+    else if(strcmp(header, SIGNAL_JOB_INFO) == 0)
     {
-        cout << "He want to check his job." << endl;
+        cout << "He want his job information." << endl;
+        request_type = 'I';
+    }
+    else if(strcmp(header, SIGNAL_PROCESS_STATUS) == 0)
+    {
+        cout << "He want to check process status." << endl;
         request_type = 'S';
     }
     
@@ -151,13 +169,24 @@ int SP_Server::extractJobNo(int client_sockfd) {
 
     memset(job_no_str, 0, BUFFER_SIZE+1);
     read(client_sockfd,job_no_str,BUFFER_SIZE);    
+    
     job_no = atoi(job_no_str);
+    
+    cout << "SP_Server::extractJobNo() - job_no_str : " << job_no_str << endl;
+    cout << "SP_Server::extractJobNo() - job_no : " << job_no << endl;
     
     return job_no;
 }
 void SP_Server::sendJobInfo(int client_sockfd, int job_no) {
     string job_info = JobManager::getJobInfo(job_no);
     write(client_sockfd, job_info.c_str(), job_info.length());
+}
+void SP_Server::send_pstatus(int client_sockfd, int job_no) {
+    char pstatus = JobManager::get_pstatus(job_no);
+    
+    cout << "send_pstatus() - pstatus : " << pstatus << endl;
+    
+    write(client_sockfd, &pstatus, 1);
 }
 void SP_Server::alertJobNo(int client_sockfd, int job_no) {
     string job_no_str = to_string(job_no);
@@ -243,4 +272,21 @@ int SP_Server::timeval_subtract (struct timeval *result, struct timeval *x, stru
 
   /* Return 1 if result is negative. */
   return x->tv_sec < y->tv_sec;
+}
+char SP_Server::check_pstatus(int pid) {
+    int pstatus_int = -1, stat_loc = -1;
+    char pstatus = 0;
+    
+    pstatus_int = waitpid(pid, &stat_loc, WNOHANG);    
+    switch(pstatus_int)
+    {
+    case 0:
+        pstatus = 'R';
+        break;
+    default:
+        pstatus = 'E';
+        break;
+    }
+    
+    return pstatus;
 }

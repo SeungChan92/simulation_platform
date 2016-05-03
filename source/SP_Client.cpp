@@ -83,32 +83,50 @@ void SP_Client::printJobInfo() {
     cout << endl << job_info << endl << endl;
 }
 void SP_Client::requestJobInfo(int job_no) {
-    string header = makeHeader(job_no);  
+    string header = makeHeader("|I|", job_no);
     write(server_sockfd, header.c_str(), 13);
 }
-void SP_Client::receiveJobNo() {
+int SP_Client::receiveJobNo() {
     int BUFFER_SIZE = 20;
     char job_no_str[BUFFER_SIZE+1];
     memset(job_no_str, 0, BUFFER_SIZE+1);
     
     read(server_sockfd,job_no_str,BUFFER_SIZE);
     job_no = atoi(job_no_str);
+    
+    return job_no;
 }
 void SP_Client::printJobNo() {
     cout << endl << "job_no : " << job_no << endl << endl;
 }
-string SP_Client::makeHeader(int job_no) {
+string SP_Client::makeHeader(string request_type, int job_no) {
     string job_no_str = to_string(job_no);
     int lengthOf_jobNo = job_no_str.length();
     string zeros = "";
-    string header = "|S|";
-    char* zero = new char('0');
+    string header = request_type;
+    string zero = "0";  
     
     for(int i=0; i<10-lengthOf_jobNo; i++)
     {
-        zeros.append(zero);
+        zeros.append(zero.c_str());
     }
     header.append(zeros).append(job_no_str);
     
+    cout << endl << "header : " << header << endl << endl;
+    
     return header;
+}
+char SP_Client::check_status(int job_no) {
+    int BUFFER_SIZE = 2;
+    char pstatus[BUFFER_SIZE+1];
+    string header = makeHeader("|S|", job_no);
+    
+    write(server_sockfd, header.c_str(), 13);
+    
+    memset(pstatus, 0, BUFFER_SIZE+1);
+    read(server_sockfd, pstatus, BUFFER_SIZE);
+    
+    cout << "check_status() - pstatus : " << pstatus << endl;
+    
+    return pstatus[0];
 }

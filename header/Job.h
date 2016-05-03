@@ -8,4 +8,5 @@ struct Job
     int job_no;
     int pid;
     timeval tv_elapsed;
+    char pstatus;
 };

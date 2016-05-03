@@ -38,10 +38,12 @@ public:
     char classifyRequest(int client_sockfd);
     int extractJobNo(int client_sockfd);
     void sendJobInfo(int client_sockfd, int job_no);
+    void send_pstatus(int client_sockfd, int job_no);
     void alertJobNo(int client_sockfd, int job_no);
     static string getFile_name(int job_no);
     void startThread(int client_sockfd, int job_no);
     static void* thread_main(void*);
     void* buildThread_argument(int client_sockfd, int job_no);
     static int timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y);
+    char check_pstatus(int pid);
 };

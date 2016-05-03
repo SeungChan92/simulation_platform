@@ -11,13 +11,46 @@ vector<Job> JobManager::jobs;
 int JobManager::getCount() {
     return JobManager::count;
 }
+int JobManager::get_pid(int job_no) {
+    int pid = -1;
+    
+    for(int i=0; i<JobManager::count; i++)
+    {
+        if(JobManager::jobs[i].job_no == job_no)
+        {
+            pid = JobManager::jobs[i].pid;
+            break;
+        }
+    }
+    
+    return pid;
+}
+int JobManager::get_jobNo(int index) {
+    return JobManager::jobs[index].job_no;
+}
+char JobManager::get_pstatus(int job_no) {
+    char pstatus = 0;
+    
+    for(int i=0; i<JobManager::count; i++)
+    {
+        if(JobManager::jobs[i].job_no == job_no)
+        {
+            pstatus = JobManager::jobs[i].pstatus;
+            break;
+        }
+    }
+    
+    cout << "JobManager::get_pstatus() - job_no : " << job_no << endl;
+    cout << "JobManager::get_pstatus() - pstatus : " << pstatus << endl;
+    
+    return pstatus;
+}
 
 void JobManager::init()
 {
     JobManager::count = 0;
 }
-int JobManager::addJob(int client_no)
-{
+int JobManager::addJob(int client_no) {
     int job_no = ++(JobManager::count);
     
     Job job = 
@@ -25,11 +58,24 @@ int JobManager::addJob(int client_no)
         client_no,
         job_no,
         -1,
-        -1
+        -1,
+        0
     };
     JobManager::jobs.push_back(job);
     
     return job_no;
+}
+void JobManager::add_job(int job_no) {
+    JobManager::count++;
+    Job job = 
+    {
+        -1,
+        job_no,
+        -1,
+        -1,
+        0
+    };
+    JobManager::jobs.push_back(job);
 }
 void JobManager::printAll()
 {
@@ -92,4 +138,48 @@ void JobManager::updatePid(int job_no, int pid) {
             break;
         }
     }
+}
+void JobManager::update_pstatus(int job_no, char pstatus) {
+    for(int i=0; i<JobManager::count; i++)
+    {
+        if(JobManager::jobs[i].job_no == job_no)
+        {
+            JobManager::jobs[i].pstatus = pstatus;
+            break;
+        }
+    }
+}
+void JobManager::print_jobNos() {
+    cout << "job numbers : " << endl;
+    for(int i=0; i<JobManager::count; i++)
+    {
+        cout << JobManager::jobs[i].job_no << '\t';
+        if((i+1)%5 == 0)
+            cout << endl;
+    }
+    cout << endl << endl;
+}
+void JobManager::print_statuses() {
+    cout << "job number - process status : " << endl;
+    for(int i=0; i<JobManager::count; i++)
+    {
+        cout << JobManager::jobs[i].job_no << "-" << JobManager::jobs[i].pstatus << '\t';
+        if((i+1)%3 == 0)
+            cout << endl;
+    }
+}
+
+bool JobManager::all_is_over() {
+    bool all_is_over = true;
+    
+    for(int i=0; i<JobManager::count; i++)
+    {
+        if(JobManager::jobs[i].pstatus != 'E')
+        {
+            all_is_over = false;
+            break;
+        }
+    }
+    
+    return all_is_over;
 }

@@ -11,7 +11,7 @@ private:
     string simulator;
     hostent* server;
 
-    string makeHeader(int job_no);
+    string makeHeader(string request_type, int job_no);
     
 public:
     SP_Client(hostent* server, int port_no);
@@ -24,7 +24,7 @@ public:
     void readSimulator(string fileToSend);
     void printJobInfo();
     void requestJobInfo(int job_no);
-    void receiveJobNo();
+    int receiveJobNo();
     void printJobNo();
-    
+    char check_status(int job_no);
 };
