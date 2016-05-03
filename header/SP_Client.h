@@ -23,8 +23,13 @@ public:
     void sendSimulator();
     void readSimulator(string fileToSend);
     void printJobInfo();
+    
     void requestJobInfo(int job_no);
+    void request_result(int job_no);
+    
     int receiveJobNo();
+    char* receive_result();
+    
     void printJobNo();
     char check_status(int job_no);
 };

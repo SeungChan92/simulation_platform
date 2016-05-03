@@ -86,6 +86,10 @@ void SP_Client::requestJobInfo(int job_no) {
     string header = makeHeader("|I|", job_no);
     write(server_sockfd, header.c_str(), 13);
 }
+void SP_Client::request_result(int job_no) {
+    string header = makeHeader("|R|", job_no);
+    write(server_sockfd, header.c_str(), 13);
+}
 int SP_Client::receiveJobNo() {
     int BUFFER_SIZE = 20;
     char job_no_str[BUFFER_SIZE+1];
@@ -96,6 +100,17 @@ int SP_Client::receiveJobNo() {
     
     return job_no;
 }
+char* SP_Client::receive_result() {
+    int BUFFER_SIZE = 20;
+    char *result = new char[BUFFER_SIZE+1];
+    
+    memset(result, 0, BUFFER_SIZE+1);
+    read(server_sockfd, result, BUFFER_SIZE);
+    
+    //cout << "receive_result() - result : " << result << endl;
+    return result;
+}
+
 void SP_Client::printJobNo() {
     cout << endl << "job_no : " << job_no << endl << endl;
 }
@@ -112,7 +127,7 @@ string SP_Client::makeHeader(string request_type, int job_no) {
     }
     header.append(zeros).append(job_no_str);
     
-    cout << endl << "header : " << header << endl << endl;
+    //cout << endl << "header : " << header << endl << endl;
     
     return header;
 }
@@ -126,7 +141,7 @@ char SP_Client::check_status(int job_no) {
     memset(pstatus, 0, BUFFER_SIZE+1);
     read(server_sockfd, pstatus, BUFFER_SIZE);
     
-    cout << "check_status() - pstatus : " << pstatus << endl;
+    //cout << "check_status() - pstatus : " << pstatus << endl;
     
     return pstatus[0];
 }

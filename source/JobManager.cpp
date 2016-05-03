@@ -7,6 +7,7 @@ using namespace std;
 
 int JobManager::count;
 vector<Job> JobManager::jobs;
+double JobManager::average_elapsedTime;
 
 int JobManager::getCount() {
     return JobManager::count;
@@ -40,15 +41,33 @@ char JobManager::get_pstatus(int job_no) {
         }
     }
     
-    cout << "JobManager::get_pstatus() - job_no : " << job_no << endl;
-    cout << "JobManager::get_pstatus() - pstatus : " << pstatus << endl;
+    //cout << "JobManager::get_pstatus() - job_no : " << job_no << endl;
+    //cout << "JobManager::get_pstatus() - pstatus : " << pstatus << endl;
     
     return pstatus;
+}
+double JobManager::get_elapsedTime(int job_no) {
+    double elapsed_time = -1;
+    
+    for(int i=0; i<JobManager::count; i++)
+    {
+        if(JobManager::jobs[i].job_no == job_no)
+        {
+            elapsed_time = JobManager::jobs[i].elapsed_time;
+            break;
+        }
+    }
+    
+    return elapsed_time;
+}
+double JobManager::get_averageElapsedTime() {
+    return JobManager::average_elapsedTime;
 }
 
 void JobManager::init()
 {
     JobManager::count = 0;
+    JobManager::average_elapsedTime = -1;
 }
 int JobManager::addJob(int client_no) {
     int job_no = ++(JobManager::count);
@@ -88,7 +107,7 @@ void JobManager::printAll()
         cout << "client_no      : " <<  job->client_no << endl;
         cout << "job_no         : " <<  job->job_no << endl;
         cout << "pid            : " << job->pid << endl;
-        cout << "elapsed_time   : " << job->tv_elapsed.tv_sec << '.' << job->tv_elapsed.tv_usec << endl;
+        cout << "elapsed_time   : " << job->elapsed_time << endl;
     }
 }
 string JobManager::getJobInfo(int job_no)
@@ -109,9 +128,8 @@ string JobManager::getJobInfo(int job_no)
             job_info.append("\npid            : ");
             job_info.append(to_string(job->pid));
             job_info.append("\nelapsed_time   : ");
-            job_info.append(to_string(job->tv_elapsed.tv_sec));
-            job_info.append(".");
-            job_info.append(to_string(job->tv_elapsed.tv_usec));
+            job_info.append(to_string(job->elapsed_time));
+            job_info.append(" s");
             
             break;
         }
@@ -119,12 +137,12 @@ string JobManager::getJobInfo(int job_no)
     
     return job_info;
 }
-void JobManager::updateElapsed_time(int job_no, timeval tv_elapsed) {
+void JobManager::update_elapsedTime(int job_no, double elapsed_time) {
     for(int i=0; i<JobManager::count; i++)
     {
         if(JobManager::jobs[i].job_no == job_no)
         {
-            JobManager::jobs[i].tv_elapsed = tv_elapsed;
+            JobManager::jobs[i].elapsed_time = elapsed_time;
             break;
         }
     }
@@ -150,23 +168,66 @@ void JobManager::update_pstatus(int job_no, char pstatus) {
     }
 }
 void JobManager::print_jobNos() {
-    cout << "job numbers : " << endl;
+    cout << endl << "job numbers : " << endl;
     for(int i=0; i<JobManager::count; i++)
     {
         cout << JobManager::jobs[i].job_no << '\t';
         if((i+1)%5 == 0)
             cout << endl;
     }
-    cout << endl << endl;
+    cout << endl;
 }
 void JobManager::print_statuses() {
-    cout << "job number - process status : " << endl;
+    cout << endl << "job number - process status : " << endl;
     for(int i=0; i<JobManager::count; i++)
     {
         cout << JobManager::jobs[i].job_no << "-" << JobManager::jobs[i].pstatus << '\t';
         if((i+1)%3 == 0)
             cout << endl;
     }
+    cout << endl;
+}
+void JobManager::print_result() {
+    cout << endl;
+    
+    cout << "job no :      ";
+    for(int i=0; i<JobManager::count; i++)
+    {
+        cout << '\t' << JobManager::jobs[i].job_no;
+    }
+    cout << endl;
+    
+    cout << "elapsed time :";
+    for(int i=0; i<JobManager::count; i++)
+    {
+        cout << '\t' << JobManager::jobs[i].elapsed_time;
+    }
+    cout << endl;
+    
+    cout << endl;
+    cal_averageElapsedTime();
+    cout << "average elapsed time : " << get_averageElapsedTime();
+    
+    cout << endl;
+}
+
+
+void JobManager::process_result(int job_no, char *result) {
+    double elapsed_time = -1;
+    
+    elapsed_time = atof(result);
+    update_elapsedTime(job_no, elapsed_time);
+}
+void JobManager::cal_averageElapsedTime() {
+    double average_elapsedTime = 0;
+    
+    for(int i=0; i<JobManager::count; i++)
+    {
+        average_elapsedTime += JobManager::jobs[i].elapsed_time;
+    }
+    average_elapsedTime /= JobManager::count;
+    
+    JobManager::average_elapsedTime = average_elapsedTime;
 }
 
 bool JobManager::all_is_over() {

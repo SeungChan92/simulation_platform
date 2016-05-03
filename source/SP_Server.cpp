@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <string.h>
 #include <iostream>
+#include <stdio.h>
 #include <unistd.h>
 #include <fstream>
 #include <sys/stat.h>
@@ -77,6 +78,11 @@ void SP_Server::processRequest() {
         send_pstatus(client_sockfd, job_no);
         cout << endl << "-------------- mission complete : S -----------------" << endl;
     }
+    else if(request_type == 'R') 
+    {
+        send_result(client_sockfd, extractJobNo(client_sockfd));
+        cout << endl << "-------------- mission complete : R -----------------" << endl;
+    }
     else
         cout << "He want something we don't know." << endl;
 }
@@ -135,6 +141,8 @@ char SP_Server::classifyRequest(int client_sockfd) {
     const char* SIGNAL_FILE_SEND = "|F|";
     const char* SIGNAL_JOB_INFO = "|I|";
     const char* SIGNAL_PROCESS_STATUS = "|S|";
+    const char* SIGNAL_RESULT = "|R|";
+    
     char request_type = 0;
     
     int BUFFER_SIZE = 3;
@@ -159,6 +167,11 @@ char SP_Server::classifyRequest(int client_sockfd) {
         cout << "He want to check process status." << endl;
         request_type = 'S';
     }
+    else if(strcmp(header, SIGNAL_RESULT) == 0)
+    {
+        cout << "He want to know the result." << endl;
+        request_type = 'R';
+    }
     
     return request_type;
 }
@@ -172,8 +185,8 @@ int SP_Server::extractJobNo(int client_sockfd) {
     
     job_no = atoi(job_no_str);
     
-    cout << "SP_Server::extractJobNo() - job_no_str : " << job_no_str << endl;
-    cout << "SP_Server::extractJobNo() - job_no : " << job_no << endl;
+    //cout << "SP_Server::extractJobNo() - job_no_str : " << job_no_str << endl;
+    //cout << "SP_Server::extractJobNo() - job_no : " << job_no << endl;
     
     return job_no;
 }
@@ -184,9 +197,20 @@ void SP_Server::sendJobInfo(int client_sockfd, int job_no) {
 void SP_Server::send_pstatus(int client_sockfd, int job_no) {
     char pstatus = JobManager::get_pstatus(job_no);
     
-    cout << "send_pstatus() - pstatus : " << pstatus << endl;
+    //cout << "send_pstatus() - pstatus : " << pstatus << endl;
     
     write(client_sockfd, &pstatus, 1);
+}
+void SP_Server::send_result(int client_sockfd, int job_no) {
+    int result_size = 20;
+    char result[result_size + 1];
+    double elapsed_time = JobManager::get_elapsedTime(job_no);
+    
+    snprintf (result, result_size, "%f", elapsed_time);
+    
+    //cout << "send_result() - result : " << result << endl;
+    
+    write(client_sockfd, result, strlen(result));
 }
 void SP_Server::alertJobNo(int client_sockfd, int job_no) {
     string job_no_str = to_string(job_no);
@@ -211,6 +235,7 @@ void* SP_Server::thread_main(void* argument) {
     string file = "", file_name = "";
     int* child_status = NULL;
     struct timeval tv_start, tv_end, tv_elapsed;
+    double elapsed_time = -1;
     
     cout << "----- thread : start -----" << endl;
     
@@ -231,9 +256,10 @@ void* SP_Server::thread_main(void* argument) {
         waitpid(pid, child_status, 0);
         gettimeofday(&tv_end, NULL);
         timeval_subtract(&tv_elapsed, &tv_end, &tv_start);
-        JobManager::updateElapsed_time(job_no, tv_elapsed);
+        elapsed_time = to_double(tv_elapsed);        
+        JobManager::update_elapsedTime(job_no, elapsed_time);
         
-        cout << "elapsed_time of child : " << tv_elapsed.tv_sec << '.' << tv_elapsed.tv_usec << endl;
+        cout << "elapsed_time of child : " << elapsed_time << endl;
         cout << endl << "-------------- mission complete : F - measure -----------------" << endl;
     
         cout << "----- thread : end -----" << endl;
@@ -289,4 +315,15 @@ char SP_Server::check_pstatus(int pid) {
     }
     
     return pstatus;
+}
+double SP_Server::to_double(timeval tv) {
+    double db = -1;
+    
+    db = tv.tv_sec;
+    db += (double)tv.tv_usec / 1000000;
+    
+    //cout << "to_double() - tv.tv_sec : " << tv.tv_sec << endl;
+    //cout << "to_double() - tv.tv_usec : " << tv.tv_usec << endl;
+    
+    return db;
 }
