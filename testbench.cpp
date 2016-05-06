@@ -16,9 +16,9 @@ int main()
     char temp_char = 0, *temp_charPtr = NULL;
     
     askTo_user(&server_str, &port_no, &filePath, &numberOf_submit);
-    server_str = "127.0.0.1";
-    port_no = 40000;
-    filePath = "/home/anseungchan/workspace/s_p/simulator_static.out";
+    //server_str = "127.0.0.1";
+    //port_no = 40000;
+    //filePath = "/home/anseungchan/workspace/s_p/simulator_static.out";
     
     server = gethostbyname(server_str.c_str());
     
@@ -30,6 +30,7 @@ int main()
     
     //cout << endl << "*********** 2 ***********" << endl << endl;
     
+    sp_client.check_fileType(filePath);
     sp_client.readSimulator(filePath);
     
     //cout << endl << "*********** 3 ***********" << endl << endl;
