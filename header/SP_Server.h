@@ -27,7 +27,7 @@ public:
 
     SP_Server(int port_no);
 
-    bool getIsMain();
+    //bool getIsMain();
 
     void processRequest();
     int acceptClient();
@@ -36,18 +36,22 @@ public:
     static void chmodFile(string file_name);
     static void executeFile(string file_name);
     char classifyRequest(int client_sockfd);
-    int extractJobNo(int client_sockfd);
+    
+    int extract_jobNo(int client_sockfd);
+    static char extract_fileType(int client_sockfd);
     
     void sendJobInfo(int client_sockfd, int job_no);
     void send_pstatus(int client_sockfd, int job_no);
     void send_result(int client_sockfd, int job_no);
     
     void alertJobNo(int client_sockfd, int job_no);
-    static string getFile_name(int job_no);
+    static string getFile_name(int job_no, char file_type);
     void startThread(int client_sockfd, int job_no);
     static void* thread_main(void*);
     void* buildThread_argument(int client_sockfd, int job_no);
     static int timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y);
     char check_pstatus(int pid);
     static double to_double(timeval tv);
+    static double cal_elapsedTime(timeval tv_start);
+    static void run_dlSim(string file_name);
 };

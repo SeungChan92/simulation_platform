@@ -10,8 +10,11 @@ int main(int argc, char *argv[])
     while(true)
     {
         sp_server.processRequest();
+        
+        /*        
         if(!sp_server.getIsMain())
             break;
+        */
     }
     
     //cout << "--end of process-- pid : " << pid << endl << endl;

@@ -10,6 +10,7 @@ private:
     struct sockaddr_in serv_addr;
     string simulator;
     hostent* server;
+    char file_type;
 
     string makeHeader(string request_type, int job_no);
     
@@ -21,6 +22,7 @@ public:
     void connect_toServer();
     void checkConnect();
     void sendSimulator();
+    void check_fileType(string fileToSend);
     void readSimulator(string fileToSend);
     void printJobInfo();
     

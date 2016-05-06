@@ -14,6 +14,7 @@ int main(int argc, char *argv[])
     
     SP_Client sp_client(server, port_no);
     
+    sp_client.check_fileType(fileToSend);
     sp_client.readSimulator(fileToSend);
     sp_client.connect_toServer();
     sp_client.checkConnect();

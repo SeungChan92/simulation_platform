@@ -16,6 +16,7 @@ SP_Client::SP_Client(hostent* server, int port_no) {
     this->server = server;
     this->port_no = port_no;
     connect_state = -1;
+    file_type = 0;
     
     setServ_addr();
 }
@@ -49,16 +50,23 @@ void SP_Client::sendSimulator()
 {
     string header = "|F|";
     
-    write(server_sockfd, header.c_str(), 3);
+    header.append(&file_type, 1);
+    
+    write(server_sockfd, header.c_str(), 4);
     write(server_sockfd, simulator.c_str(), simulator.length());
     close(server_sockfd);
-    /*    
-    string end_signal = "IT'S THE FILE END";
-    write(server_sockfd, end_signal.c_str(), 17);
-   
-    string buffer = "777777777 ";    
-    write(server_sockfd, buffer.c_str(), 10);
-    */
+}
+void SP_Client::check_fileType(string fileToSend) {
+    string classifier = fileToSend.substr(fileToSend.length()-1, 1);
+    
+    if(classifier.compare("t") == 0) //.out
+    {
+        file_type = 'O';
+    }
+    else if(classifier.compare("o") == 0) //.so
+    {
+        file_type = 'S';
+    }    
 }
 void SP_Client::readSimulator(string fileToSend)
 {

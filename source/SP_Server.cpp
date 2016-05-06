@@ -12,13 +12,14 @@
 #include <stdlib.h>
 #include <wait.h>
 #include <sys/time.h>
+#include <dlfcn.h>
 
 using namespace std;
 
 SP_Server::SP_Server(int port_no)
 {
     this->port_no = port_no;
-    isMain = true;
+    //isMain = true;
     
     JobManager::init();
     openSocket();
@@ -39,9 +40,11 @@ void SP_Server::setServ_addr() {
     serv_addr.sin_port = htons(port_no);
 }
 
+/*
 bool SP_Server::getIsMain() {
     return isMain;
 }
+*/
 
 void SP_Server::processRequest() {
     int job_no = -1, client_sockfd = -1, temp_int = -1;
@@ -59,16 +62,18 @@ void SP_Server::processRequest() {
 
         client_sockfd = acceptClient();
         alertJobNo(client_sockfd, job_no);
+        close(client_sockfd);
         //cout << endl << "-------------- mission complete : F - send job_no -----------------" << endl;
     }
     else if(request_type == 'I') 
     {
-        sendJobInfo(client_sockfd, extractJobNo(client_sockfd));
+        sendJobInfo(client_sockfd, extract_jobNo(client_sockfd));
+        close(client_sockfd);
         cout << endl << "-------------- mission complete : I -----------------" << endl;
     }
     else if(request_type == 'S') 
     {
-        job_no = extractJobNo(client_sockfd);
+        job_no = extract_jobNo(client_sockfd);
         temp_int = JobManager::get_pid(job_no);
         temp_char = check_pstatus(temp_int);
         
@@ -76,15 +81,20 @@ void SP_Server::processRequest() {
         
         JobManager::update_pstatus(job_no, temp_char);        
         send_pstatus(client_sockfd, job_no);
+        close(client_sockfd);        
         cout << endl << "-------------- mission complete : S -----------------" << endl;
     }
     else if(request_type == 'R') 
     {
-        send_result(client_sockfd, extractJobNo(client_sockfd));
+        send_result(client_sockfd, extract_jobNo(client_sockfd));
+        close(client_sockfd);        
         cout << endl << "-------------- mission complete : R -----------------" << endl;
     }
     else
+    {
         cout << "He want something we don't know." << endl;
+        close(client_sockfd);        
+    }
 }
 int SP_Server::acceptClient() {
     int client_sockfd = accept(sockfd, 
@@ -133,8 +143,8 @@ void SP_Server::executeFile(string file_name) {
     int flag = execl(file_name.c_str(), file_name.c_str(), NULL);
     if(flag == -1)
     {
-        cout << "execl() : error" << endl;
-        cout << "file_name : " << file_name << endl;
+        cout << "executeFile() - execl() : error" << endl;
+        cout << "executeFile() - file_name : " << file_name << endl;
     }
 }
 char SP_Server::classifyRequest(int client_sockfd) {
@@ -175,21 +185,30 @@ char SP_Server::classifyRequest(int client_sockfd) {
     
     return request_type;
 }
-int SP_Server::extractJobNo(int client_sockfd) {
+
+int SP_Server::extract_jobNo(int client_sockfd) {
     int job_no = -1;
     int BUFFER_SIZE = 10;
-    char job_no_str[BUFFER_SIZE+1];
+    char buffer[BUFFER_SIZE+1];
 
-    memset(job_no_str, 0, BUFFER_SIZE+1);
-    read(client_sockfd,job_no_str,BUFFER_SIZE);    
+    memset(buffer, 0, BUFFER_SIZE+1);
+    read(client_sockfd, buffer, BUFFER_SIZE);    
     
-    job_no = atoi(job_no_str);
-    
-    //cout << "SP_Server::extractJobNo() - job_no_str : " << job_no_str << endl;
-    //cout << "SP_Server::extractJobNo() - job_no : " << job_no << endl;
+    job_no = atoi(buffer);
     
     return job_no;
 }
+char SP_Server::extract_fileType(int client_sockfd) {
+    int BUFFER_SIZE = 1;
+    char buffer[BUFFER_SIZE+1];
+
+    memset(buffer, 0, BUFFER_SIZE+1);
+    read(client_sockfd, buffer, BUFFER_SIZE);    
+    
+    return buffer[0];
+}
+
+
 void SP_Server::sendJobInfo(int client_sockfd, int job_no) {
     string job_info = JobManager::getJobInfo(job_no);
     write(client_sockfd, job_info.c_str(), job_info.length());
@@ -216,10 +235,21 @@ void SP_Server::alertJobNo(int client_sockfd, int job_no) {
     string job_no_str = to_string(job_no);
     write(client_sockfd, job_no_str.c_str(), job_no_str.length());
 }
-string SP_Server::getFile_name(int job_no) {
+string SP_Server::getFile_name(int job_no, char file_type) {
     string file_name = "simulator_";
     file_name.append(to_string(job_no));
-    file_name.append(".out");
+    if(file_type == 'O')
+    {
+        file_name.append(".out");        
+    }
+    else if(file_type == 'S')
+    {
+        file_name.append(".so");
+    }
+    else
+    {
+        cout << "getFile_name() - wrong file_type : " << file_type << endl;
+    }
     
     return file_name;
 }
@@ -231,44 +261,54 @@ void* SP_Server::thread_main(void* argument) {
     struct thread_argument* arg = (thread_argument*)argument;
     int client_sockfd = arg->client_sockfd;
     int job_no = arg->job_no;
+    
+    char file_type = 0;
     int pid = -1;
     string file = "", file_name = "";
     int* child_status = NULL;
-    struct timeval tv_start, tv_end, tv_elapsed;
+    struct timeval tv_start;
     double elapsed_time = -1;
     
     cout << "----- thread : start -----" << endl;
     
+    file_type = extract_fileType(client_sockfd);
     file = receiveFile(client_sockfd);
-    file_name = getFile_name(JobManager::getCount());
+    file_name = getFile_name(job_no, file_type);
     saveFile(file, file_name);
     chmodFile(file_name);
     
-    pid = fork();
-    if(pid == 0) //child
-    {
-        executeFile(file_name);
-    }
-    else if(pid > 0) //parent
-    {
-        gettimeofday(&tv_start, NULL);
-        JobManager::updatePid(job_no, pid);
-        waitpid(pid, child_status, 0);
-        gettimeofday(&tv_end, NULL);
-        timeval_subtract(&tv_elapsed, &tv_end, &tv_start);
-        elapsed_time = to_double(tv_elapsed);        
-        JobManager::update_elapsedTime(job_no, elapsed_time);
-        
-        cout << "elapsed_time of child : " << elapsed_time << endl;
-        cout << endl << "-------------- mission complete : F - measure -----------------" << endl;
+    gettimeofday(&tv_start, NULL);    
     
-        cout << "----- thread : end -----" << endl;
-        pthread_exit((void*)1);
-    }
-    else
+    if(file_type == 'O')
     {
-        cout << "fork() : fail" << endl;
+        pid = fork();
+        if(pid == 0) //child
+        {
+            executeFile(file_name);
+        }
+        else if(pid > 0) //parent
+        {
+            JobManager::updatePid(job_no, pid);
+            waitpid(pid, child_status, 0);
+        }
+        else
+        {
+            cout << "fork() : fail" << endl;
+        }
     }
+    else if(file_type == 'S')
+    {
+        run_dlSim(file_name);
+    }
+    
+    elapsed_time = cal_elapsedTime(tv_start);
+    JobManager::update_elapsedTime(job_no, elapsed_time);
+    
+    cout << "elapsed_time of child : " << elapsed_time << endl;
+    cout << endl << "-------------- mission complete : F - measure -----------------" << endl;
+
+    cout << "----- thread : end -----" << endl;
+    pthread_exit((void*)1);
 }
 void* SP_Server::buildThread_argument(int client_sockfd, int job_no) {
     struct thread_argument* thread_arg = new struct thread_argument;
@@ -326,4 +366,40 @@ double SP_Server::to_double(timeval tv) {
     //cout << "to_double() - tv.tv_usec : " << tv.tv_usec << endl;
     
     return db;
+}
+double SP_Server::cal_elapsedTime(timeval tv_start) {
+    double elapsed_time = -1;
+    struct timeval tv_end, tv_elapsed;
+    
+    gettimeofday(&tv_end, NULL);
+    timeval_subtract(&tv_elapsed, &tv_end, &tv_start);
+    elapsed_time = to_double(tv_elapsed);
+    
+    return elapsed_time;
+}
+void SP_Server::run_dlSim(string file_name) {
+    void *handle;
+    char *error;
+    int (*main)(void);
+    string file_path = "./";
+    
+    file_path.append(file_name.c_str());
+    handle = dlopen (file_path.c_str(), RTLD_NOW);
+    if (!handle)
+    {
+        fputs (dlerror(), stderr);
+        exit(1); 
+    }
+    
+    main = (int (*)(void))dlsym(handle, "main");
+    if((error = dlerror()) != NULL)
+    {
+        fputs(error, stderr);
+        printf("\n");
+        exit(1);
+    }
+    
+    (*main)();
+    
+    dlclose(handle);
 }
