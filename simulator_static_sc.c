@@ -11,8 +11,8 @@ int main()
     int numberOf_loop = 12500000; //support elapsed time to 1
     
     printf("It's a static_sc simulator.\n");
-    printf("memory_size : more than %d bytes\n", memory_size);
-    printf("numberOf_loop : %d\n", numberOf_loop);
+    //printf("memory_size : more than %d bytes\n", memory_size);
+    //printf("numberOf_loop : %d\n", numberOf_loop);
     
     void* memory = malloc(memory_size);
     
@@ -22,7 +22,7 @@ int main()
         getuid();
     }
     
-    printf("end\n");
+    printf("end\n\n");
     
     return 0;
 }

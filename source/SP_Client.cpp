@@ -88,6 +88,7 @@ void SP_Client::readSimulator(string fileToSend)
 void SP_Client::printJobInfo() {
     int BUFFER_SIZE = 100;
     char job_info[BUFFER_SIZE+1];
+    memset(job_info, 0, BUFFER_SIZE+1);
     
     read(server_sockfd,job_info,BUFFER_SIZE);
     cout << endl << job_info << endl << endl;

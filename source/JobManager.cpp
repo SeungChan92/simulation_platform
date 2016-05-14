@@ -8,6 +8,7 @@ using namespace std;
 int JobManager::count;
 vector<Job> JobManager::jobs;
 double JobManager::average_elapsedTime;
+double JobManager::max_elapsedTime;
 
 int JobManager::getCount() {
     return JobManager::count;
@@ -62,6 +63,9 @@ double JobManager::get_elapsedTime(int job_no) {
 }
 double JobManager::get_averageElapsedTime() {
     return JobManager::average_elapsedTime;
+}
+double JobManager::get_maxElapsedTime() {
+    return JobManager::max_elapsedTime;
 }
 
 void JobManager::init()
@@ -207,7 +211,9 @@ void JobManager::print_result() {
     
     cout << endl;
     cal_averageElapsedTime();
-    cout << "average elapsed time : " << get_averageElapsedTime();
+    cout << "average elapsed time : " << get_averageElapsedTime() << endl;
+    cal_maxElapsedTime();
+    cout << "max elapsed time : " << get_maxElapsedTime() << endl;
     
     cout << endl;
 }
@@ -229,6 +235,19 @@ void JobManager::cal_averageElapsedTime() {
     average_elapsedTime /= JobManager::count;
     
     JobManager::average_elapsedTime = average_elapsedTime;
+}
+void JobManager::cal_maxElapsedTime() {
+    double max_elapsedTime = -1;
+    
+    for(int i=0; i<JobManager::count; i++)
+    {
+        if(JobManager::jobs[i].elapsed_time > max_elapsedTime)
+        {
+            max_elapsedTime = JobManager::jobs[i].elapsed_time;
+        }
+    }
+    
+    JobManager::max_elapsedTime = max_elapsedTime;
 }
 
 bool JobManager::all_is_over() {

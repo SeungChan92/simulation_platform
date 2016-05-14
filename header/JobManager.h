@@ -15,6 +15,7 @@ private:
     static vector<Job> jobs;
     static int count;
     static double average_elapsedTime;
+    static double max_elapsedTime;
 public:
     static int getCount();
     static int get_pid(int job_no);
@@ -22,6 +23,7 @@ public:
     static char get_pstatus(int job_no);
     static double get_elapsedTime(int job_no);
     static double get_averageElapsedTime();
+    static double get_maxElapsedTime();
 
     static void init();
     static int addJob(int client_no);
@@ -38,6 +40,7 @@ public:
     
     static void process_result(int job_no, char *result);
     static void cal_averageElapsedTime();
+    static void cal_maxElapsedTime();
     
     static bool all_is_over();
 };

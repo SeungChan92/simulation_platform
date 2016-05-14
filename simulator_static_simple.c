@@ -8,7 +8,7 @@ int main()
 {
     srand(clock());
     int memory_size = 1;
-    int numberOf_loop = 230769231;
+    int numberOf_loop = 23076923;
     //int numberOf_loop = 230769231; //support elapsed time to 1
     
     printf("It's a static_simple simulator.\n");

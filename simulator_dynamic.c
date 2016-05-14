@@ -9,8 +9,8 @@ int main()
     int numberOf_loop = rand();
     
     printf("It's a dynamic simulator.\n");
-    printf("memory_size : more than %d bytes\n", memory_size);
-    printf("numberOf_loop : %d\n", numberOf_loop);
+    //printf("memory_size : more than %d bytes\n", memory_size);
+    //printf("numberOf_loop : %d\n", numberOf_loop);
     
     void* memory = malloc(memory_size);
     
@@ -20,7 +20,7 @@ int main()
         1*1;
     }
     
-    printf("end\n");
+    printf("end\n\n");
     
     return 0;
 }
