@@ -1,5 +1,4 @@
 #include "../header/SP_Server.h"
-
 #include "../header/JobManager.h"
 
 #include <sys/socket.h>
@@ -16,12 +15,12 @@
 
 using namespace std;
 
-SP_Server::SP_Server(int port_no)
+SP_Server::SP_Server(int port_no, int numberOf_threads)
 {
     this->port_no = port_no;
-    //isMain = true;
     
     JobManager::init();
+    thpool = thpool_init(numberOf_threads);
     openSocket();
 }
 
@@ -40,12 +39,6 @@ void SP_Server::setServ_addr() {
     serv_addr.sin_port = htons(port_no);
 }
 
-/*
-bool SP_Server::getIsMain() {
-    return isMain;
-}
-*/
-
 void SP_Server::processRequest() {
     int job_no = -1, client_sockfd = -1, temp_int = -1;
     char request_type = 0, temp_char = 0;
@@ -56,7 +49,7 @@ void SP_Server::processRequest() {
     {
         job_no = JobManager::addJob(SP_Server::CLIENT_NO);
         
-        startThread(client_sockfd, job_no);
+        add_work(client_sockfd, job_no);
         //cout << "-- this is main-thread : after start another --" << endl;
         //cout << "-- another thread id : " << thread << " --" << endl;
 
@@ -247,9 +240,11 @@ string SP_Server::getFile_name(int job_no, char file_type) {
     
     return file_name;
 }
-void SP_Server::startThread(int client_sockfd, int job_no) {
+void SP_Server::add_work(int client_sockfd, int job_no) {
     void* argument = buildThread_argument(client_sockfd, job_no);
-    pthread_create(&thread, NULL, &thread_main, argument);
+    
+    thpool_add_work(thpool, &thread_main, argument);
+    //pthread_create(&thread, NULL, &thread_main, argument);
 }
 void* SP_Server::thread_main(void* argument) {
     struct thread_argument* arg = (thread_argument*)argument;
@@ -302,8 +297,8 @@ void* SP_Server::thread_main(void* argument) {
     cout << "elapsed_time of child : " << elapsed_time << endl;
     cout << endl << "-------------- mission complete : F - measure -----------------" << endl;
 
-    cout << "----- thread : end -----" << endl;
-    pthread_exit((void*)1);
+    //cout << "----- thread : end -----" << endl;
+    //pthread_exit((void*)1);
 }
 void* SP_Server::buildThread_argument(int client_sockfd, int job_no) {
     struct thread_argument* thread_arg = new struct thread_argument;

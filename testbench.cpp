@@ -52,8 +52,8 @@ int main()
     JobManager::print_jobNos();
     while(true)
     {
-        sleep(2);
-        cout << endl << "elapsed time : " << ++count * 2 << " sec";
+        sleep(3);
+        cout << endl << "elapsed time : " << ++count * 3 << " sec";
         
         for(int i=0; i<numberOf_submit; i++)
         {

@@ -1,3 +1,5 @@
+#include "thpool.h"
+
 #include <string>
 #include <netinet/in.h>
 #include <sys/time.h>
@@ -13,8 +15,8 @@ private:
     struct sockaddr_in serv_addr, cli_addr;
     socklen_t clilen;
     char request_type;
-    bool isMain;
     pthread_t thread;
+    threadpool thpool;
     
     void openSocket();
     void setServ_addr();
@@ -25,9 +27,7 @@ public:
         int client_sockfd, job_no;
     };
 
-    SP_Server(int port_no);
-
-    //bool getIsMain();
+    SP_Server(int port_no, int numberOf_threads);
 
     void processRequest();
     int acceptClient();
@@ -46,7 +46,7 @@ public:
     
     void alertJobNo(int client_sockfd, int job_no);
     static string getFile_name(int job_no, char file_type);
-    void startThread(int client_sockfd, int job_no);
+    void add_work(int client_sockfd, int job_no);
     static void* thread_main(void*);
     void* buildThread_argument(int client_sockfd, int job_no);
     static int timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y);
