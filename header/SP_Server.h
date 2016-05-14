@@ -50,7 +50,7 @@ public:
     static void* thread_main(void*);
     void* buildThread_argument(int client_sockfd, int job_no);
     static int timeval_subtract(struct timeval *result, struct timeval *x, struct timeval *y);
-    char check_pstatus(int pid);
+    //char check_pstatus(int pid);
     static double to_double(timeval tv);
     static double cal_elapsedTime(timeval tv_start);
     static void run_dlSim(string file_name);

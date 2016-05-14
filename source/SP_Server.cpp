@@ -73,13 +73,7 @@ void SP_Server::processRequest() {
     }
     else if(request_type == 'S') 
     {
-        job_no = extract_jobNo(client_sockfd);
-        temp_int = JobManager::get_pid(job_no);
-        temp_char = check_pstatus(temp_int);
-        
-        cout << endl << "pstatus : " << temp_char << endl << endl;
-        
-        JobManager::update_pstatus(job_no, temp_char);        
+        job_no = extract_jobNo(client_sockfd);              
         send_pstatus(client_sockfd, job_no);
         close(client_sockfd);        
         cout << endl << "-------------- mission complete : S -----------------" << endl;
@@ -303,6 +297,7 @@ void* SP_Server::thread_main(void* argument) {
     
     elapsed_time = cal_elapsedTime(tv_start);
     JobManager::update_elapsedTime(job_no, elapsed_time);
+    JobManager::update_pstatus(job_no, 'E');
     
     cout << "elapsed_time of child : " << elapsed_time << endl;
     cout << endl << "-------------- mission complete : F - measure -----------------" << endl;
@@ -339,6 +334,7 @@ int SP_Server::timeval_subtract (struct timeval *result, struct timeval *x, stru
   /* Return 1 if result is negative. */
   return x->tv_sec < y->tv_sec;
 }
+/*
 char SP_Server::check_pstatus(int pid) {
     int pstatus_int = -1, stat_loc = -1;
     char pstatus = 0;
@@ -356,6 +352,7 @@ char SP_Server::check_pstatus(int pid) {
     
     return pstatus;
 }
+*/
 double SP_Server::to_double(timeval tv) {
     double db = -1;
     

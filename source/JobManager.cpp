@@ -78,7 +78,7 @@ int JobManager::addJob(int client_no) {
         job_no,
         -1,
         -1,
-        0
+        'R'
     };
     JobManager::jobs.push_back(job);
     
@@ -167,6 +167,7 @@ void JobManager::update_pstatus(int job_no, char pstatus) {
         }
     }
 }
+
 void JobManager::print_jobNos() {
     cout << endl << "job numbers : " << endl;
     for(int i=0; i<JobManager::count; i++)
