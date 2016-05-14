@@ -38,14 +38,13 @@ int main()
     for(int i=0; i<numberOf_submit; i++)
     {
         sp_client.connect_toServer();
-        //sp_client.checkConnect();
+        sp_client.checkConnect();
         sp_client.sendSimulator();
         
         sp_client.connect_toServer();
-        //sp_client.checkConnect();
+        sp_client.checkConnect();
         temp_int = sp_client.receiveJobNo();
-        
-        //cout << "job_no : " << temp_int << endl;
+        sp_client.close_socket();
         
         JobManager::add_job(temp_int);
     }
@@ -59,12 +58,12 @@ int main()
         {
             temp_int = JobManager::get_jobNo(i);
             sp_client.connect_toServer();
-            //sp_client.checkConnect();
+            sp_client.checkConnect();
+            
             temp_char = sp_client.check_status(temp_int);
-            
-            //cout << endl << "pstatus : " << temp_char << endl << endl;
-            
             JobManager::update_pstatus(temp_int, temp_char);
+            
+            sp_client.close_socket();
         }
         if(JobManager::all_is_over())
         {
@@ -81,9 +80,10 @@ int main()
         temp_int = JobManager::get_jobNo(i);
         
         sp_client.connect_toServer();
-        //sp_client.checkConnect();
+        sp_client.checkConnect();
         sp_client.request_result(temp_int);
         temp_charPtr = sp_client.receive_result();
+        sp_client.close_socket();
         JobManager::process_result(temp_int, temp_charPtr);
     }
     JobManager::print_result();

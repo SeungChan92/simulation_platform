@@ -34,4 +34,6 @@ public:
     
     void printJobNo();
     char check_status(int job_no);
+    
+    void close_socket();
 };

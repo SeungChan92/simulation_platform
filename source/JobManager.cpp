@@ -183,7 +183,7 @@ void JobManager::print_statuses() {
     for(int i=0; i<JobManager::count; i++)
     {
         cout << JobManager::jobs[i].job_no << "-" << JobManager::jobs[i].pstatus << '\t';
-        if((i+1)%3 == 0)
+        if((i+1)%5 == 0)
             cout << endl;
     }
     cout << endl;

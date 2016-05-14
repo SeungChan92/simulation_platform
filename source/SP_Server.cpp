@@ -1,5 +1,6 @@
 #include "../header/SP_Server.h"
 #include "../header/JobManager.h"
+#include "../header/Task.h"
 
 #include <sys/socket.h>
 #include <string.h>
@@ -20,8 +21,15 @@ SP_Server::SP_Server(int port_no, int numberOf_threads)
     this->port_no = port_no;
     
     JobManager::init();
-    thpool = thpool_init(numberOf_threads);
+    thread_pool = new ThreadPool(numberOf_threads);
+    int ret = thread_pool->initialize_threadpool();
+    if (ret == -1) {
+        cerr << "Failed to initialize thread pool!" << endl;
+    }
     openSocket();
+}
+SP_Server::~SP_Server() {
+    thread_pool->destroy_threadpool();
 }
 
 void SP_Server::openSocket() {
@@ -62,24 +70,24 @@ void SP_Server::processRequest() {
     {
         sendJobInfo(client_sockfd, extract_jobNo(client_sockfd));
         close(client_sockfd);
-        cout << endl << "-------------- mission complete : I -----------------" << endl;
+        //cout << endl << "-------------- mission complete : I -----------------" << endl;
     }
     else if(request_type == 'S') 
     {
         job_no = extract_jobNo(client_sockfd);              
         send_pstatus(client_sockfd, job_no);
         close(client_sockfd);        
-        cout << endl << "-------------- mission complete : S -----------------" << endl;
+        //cout << endl << "-------------- mission complete : S -----------------" << endl;
     }
     else if(request_type == 'R') 
     {
         send_result(client_sockfd, extract_jobNo(client_sockfd));
         close(client_sockfd);        
-        cout << endl << "-------------- mission complete : R -----------------" << endl;
+        //cout << endl << "-------------- mission complete : R -----------------" << endl;
     }
     else
     {
-        cout << "He want something we don't know." << endl;
+        //cout << "He want something we don't know." << endl;
         close(client_sockfd);        
     }
 }
@@ -130,8 +138,8 @@ void SP_Server::executeFile(string file_name) {
     int flag = execl(file_name.c_str(), file_name.c_str(), NULL);
     if(flag == -1)
     {
-        cout << "executeFile() - execl() : error" << endl;
-        cout << "executeFile() - file_name : " << file_name << endl;
+        //cout << "executeFile() - execl() : error" << endl;
+        //cout << "executeFile() - file_name : " << file_name << endl;
     }
 }
 char SP_Server::classifyRequest(int client_sockfd) {
@@ -147,26 +155,26 @@ char SP_Server::classifyRequest(int client_sockfd) {
 
     memset(header, 0, sizeof header);
     read(client_sockfd,header,BUFFER_SIZE);
-    cout << endl << "Header : " << header << endl;
+    //cout << endl << "Header : " << header << endl;
     
     if(strcmp(header, SIGNAL_FILE_SEND) == 0)
     {
-        cout << "He want to send file." << endl;
+        //cout << "He want to send file." << endl;
         request_type = 'F';
     }
     else if(strcmp(header, SIGNAL_JOB_INFO) == 0)
     {
-        cout << "He want his job information." << endl;
+        //cout << "He want his job information." << endl;
         request_type = 'I';
     }
     else if(strcmp(header, SIGNAL_PROCESS_STATUS) == 0)
     {
-        cout << "He want to check process status." << endl;
+        //cout << "He want to check process status." << endl;
         request_type = 'S';
     }
     else if(strcmp(header, SIGNAL_RESULT) == 0)
     {
-        cout << "He want to know the result." << endl;
+        //cout << "He want to know the result." << endl;
         request_type = 'R';
     }
     
@@ -235,18 +243,18 @@ string SP_Server::getFile_name(int job_no, char file_type) {
     }
     else
     {
-        cout << "getFile_name() - wrong file_type : " << file_type << endl;
+        //cout << "getFile_name() - wrong file_type : " << file_type << endl;
     }
     
     return file_name;
 }
 void SP_Server::add_work(int client_sockfd, int job_no) {
     void* argument = buildThread_argument(client_sockfd, job_no);
-    
-    thpool_add_work(thpool, &thread_main, argument);
+    Task* t = new Task(&thread_main, argument);
+    thread_pool->add_task(t);
     //pthread_create(&thread, NULL, &thread_main, argument);
 }
-void* SP_Server::thread_main(void* argument) {
+void SP_Server::thread_main(void* argument) {
     struct thread_argument* arg = (thread_argument*)argument;
     int client_sockfd = arg->client_sockfd;
     int job_no = arg->job_no;
@@ -258,7 +266,7 @@ void* SP_Server::thread_main(void* argument) {
     struct timeval tv_start;
     double elapsed_time = -1;
     
-    cout << "----- thread : start -----" << endl;
+    //cout << "----- thread : start -----" << endl;
     
     file_type = extract_fileType(client_sockfd);
     file = receiveFile(client_sockfd);
@@ -282,7 +290,7 @@ void* SP_Server::thread_main(void* argument) {
         }
         else
         {
-            cout << "fork() : fail" << endl;
+            //cout << "fork() : fail" << endl;
         }
     }
     else if(file_type == 'S')
@@ -294,8 +302,8 @@ void* SP_Server::thread_main(void* argument) {
     JobManager::update_elapsedTime(job_no, elapsed_time);
     JobManager::update_pstatus(job_no, 'E');
     
-    cout << "elapsed_time of child : " << elapsed_time << endl;
-    cout << endl << "-------------- mission complete : F - measure -----------------" << endl;
+    //cout << "elapsed_time of child : " << elapsed_time << endl;
+    //cout << endl << "-------------- mission complete : F - measure -----------------" << endl;
 
     //cout << "----- thread : end -----" << endl;
     //pthread_exit((void*)1);

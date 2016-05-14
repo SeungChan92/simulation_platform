@@ -8,11 +8,12 @@ int main()
 {
     srand(clock());
     int memory_size = 1;
-    int numberOf_loop = 230769231; //support elapsed time to 1
+    int numberOf_loop = 230769231;
+    //int numberOf_loop = 230769231; //support elapsed time to 1
     
     printf("It's a static_simple simulator.\n");
-    printf("memory_size : more than %d bytes\n", memory_size);
-    printf("numberOf_loop : %d\n", numberOf_loop); 
+    //printf("memory_size : more than %d bytes\n", memory_size);
+    //printf("numberOf_loop : %d\n\n", numberOf_loop); 
     
     void* memory = malloc(memory_size);
     
@@ -22,7 +23,7 @@ int main()
         1*1;
     }
     
-    printf("end\n");
+    printf("end\n\n");
     
     return 0;
 }

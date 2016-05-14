@@ -43,8 +43,10 @@ void SP_Client::checkConnect()
 {
     if (connect_state < 0) 
         error("ERROR connecting");
+    /*
     else
         cout << "connect success" << endl;
+    */
 }
 void SP_Client::sendSimulator()
 {
@@ -149,7 +151,9 @@ char SP_Client::check_status(int job_no) {
     memset(pstatus, 0, BUFFER_SIZE+1);
     read(server_sockfd, pstatus, BUFFER_SIZE);
     
-    //cout << "check_status() - pstatus : " << pstatus << endl;
-    
     return pstatus[0];
+}
+
+void SP_Client::close_socket() {
+    close(server_sockfd);
 }
