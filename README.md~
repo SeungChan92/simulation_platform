@@ -19,7 +19,6 @@ If you find Simulation Platform useful in your project, please consider citing:
 4. [Run: Server](#run-server)
 5. [Run: Client](#run-client)
 6. [Usage](#usage)
-7. [Reference](#reference)
 
 ### Development Environment
 
@@ -100,7 +99,3 @@ You can check elapsed time of your simulator on various conditions. You can chan
     
 + number of threads run simultaneously.
 + run on process or thread
-
-### Reference
-
-Thread Pool : https://github.com/bilash/threadpool
